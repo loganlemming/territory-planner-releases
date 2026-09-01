@@ -1,11 +1,10 @@
 {
-  "version": "1.5.0",
+  "version": "1.6.0",
   "released": "2026-09-01",
   "notes": [
-    "Per-territory Proposed Quota with live remaining",
-    "In-app update checker",
-    "Backup and restore all data"
+    "Allocated and unallocated amounts now show under Total, Renewal, Upsell and Net-New",
+    "Search and Actions moved next to the title"
   ],
   "url": "https://raw.githubusercontent.com/loganlemming/territory-planner-releases/main/index.html",
-  "bytes": 127903
+  "bytes": 129892
 }
