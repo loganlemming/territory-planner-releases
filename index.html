@@ -16,7 +16,9 @@
 
   header {
     display: flex;
-    justify-content: space-between;
+    /* Title and toolbar sit together on the left; the theme toggle is pushed
+       right by .user-info's auto margin. */
+    justify-content: flex-start;
     align-items: center;
     margin-bottom: 24px;
     flex-wrap: wrap;
@@ -757,6 +759,28 @@
     color: #FA582D;
   }
 
+  .quota-total-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  /* Allocated / unallocated readout shown under Total and each quota input,
+     so the split is visible where the numbers are entered. */
+  .quota-alloc-note {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    min-height: 0.95rem;
+    white-space: nowrap;
+  }
+
+  .quota-alloc-note.under    { color: #7A5700; }
+  .quota-alloc-note.balanced { color: #155226; }
+  .quota-alloc-note.over     { color: #A51B00; }
+
   .quota-toggle {
     font-size: 0.75rem;
     background: none;
@@ -1151,6 +1175,7 @@
   .user-info {
     display: flex; align-items: center; gap: 10px;
     font-size: 0.8rem;
+    margin-left: auto;
   }
 
   /* ── Theme Toggle ── */
@@ -1243,6 +1268,11 @@
   body.dark .quota-terr-card .qt-total { color: #e8e8e8; border-top-color: #444444; }
 
   body.dark .quota-panel h3 { color: #e8e8e8; }
+
+  /* Light-mode note colors are too dark against the #1c1c1c panel */
+  body.dark .quota-alloc-note.under    { color: #F5C842; }
+  body.dark .quota-alloc-note.balanced { color: #6EE7A0; }
+  body.dark .quota-alloc-note.over     { color: #FF8A6B; }
   body.dark .ts-divider { border-top-color: #333333; }
   body.dark .account-card .card-section-title { color: #6b7280; }
   body.dark .account-card .card-section-title::before,
@@ -1378,7 +1408,10 @@
   <div class="quota-panel" id="quotaPanel">
     <h3>
       Quota Calculator
-      <span class="quota-total" id="quotaTotalDisplay">Total: $0</span>
+      <span class="quota-total-wrap">
+        <span class="quota-total" id="quotaTotalDisplay">Total: $0</span>
+        <span class="quota-alloc-note" id="quotaNoteTotal"></span>
+      </span>
       <button class="quota-toggle" id="quotaToggle" onclick="toggleQuotaPanel()">Expand</button>
     </h3>
     <div id="quotaBody" class="hidden">
@@ -1386,14 +1419,17 @@
         <div class="quota-field">
           <label>Renewal</label>
           <input type="text" id="quotaRenewal" placeholder="$0" oninput="onQuotaChange()" />
+          <span class="quota-alloc-note" id="quotaNoteRenewal"></span>
         </div>
         <div class="quota-field">
           <label>Upsell</label>
           <input type="text" id="quotaUpsell" placeholder="$0" oninput="onQuotaChange()" />
+          <span class="quota-alloc-note" id="quotaNoteUpsell"></span>
         </div>
         <div class="quota-field">
           <label>Net-New</label>
           <input type="text" id="quotaNetNew" placeholder="$0" oninput="onQuotaChange()" />
+          <span class="quota-alloc-note" id="quotaNoteNetNew"></span>
         </div>
       </div>
       <div class="quota-allocation" id="quotaAllocation"></div>
@@ -1470,7 +1506,7 @@
 // ── App Version ───────────────────────────────────────────────────────
 // Bumped by release.sh. The manifest lives in a small public repo so the
 // update check works without a token; the source repo stays private.
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 const UPDATE_MANIFEST_URL =
   'https://raw.githubusercontent.com/loganlemming/territory-planner-releases/main/version.json';
 const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12h
@@ -2604,6 +2640,28 @@ function updateQuotaTotals() {
   updateQuotaRemaining();
 }
 
+// Writes the "$X allocated · $Y unallocated" readout under one quota field.
+function setQuotaNote(elId, quota, allocated) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (quota === 0 && allocated === 0) {
+    el.className = 'quota-alloc-note';
+    el.textContent = '';
+    return;
+  }
+  const remaining = quota - allocated;
+  let cls, status;
+  if (Math.abs(remaining) < 0.01) {
+    cls = 'balanced'; status = 'fully allocated';
+  } else if (remaining > 0) {
+    cls = 'under'; status = `${fmt(remaining)} unallocated`;
+  } else {
+    cls = 'over'; status = `${fmt(Math.abs(remaining))} over`;
+  }
+  el.className = 'quota-alloc-note ' + cls;
+  el.textContent = `${fmt(allocated)} allocated · ${status}`;
+}
+
 function updateQuotaRemaining() {
   const totalQuota = quotaData.renewal + quotaData.upsell + quotaData.netNew;
   const sum = key => Object.values(quotaData.allocations).reduce((s, a) => s + (a[key] || 0), 0);
@@ -2612,10 +2670,16 @@ function updateQuotaRemaining() {
   const allocNetNew = sum('netNew');
   const totalProposed = sum('proposed');
   const totalAlloc = allocRenewal + allocUpsell + allocNetNew;
-  const remaining = totalQuota - totalAlloc;
 
+  // Per-bucket status sits with the inputs rather than in one dense bottom line.
+  setQuotaNote('quotaNoteTotal',   totalQuota,          totalAlloc);
+  setQuotaNote('quotaNoteRenewal', quotaData.renewal,   allocRenewal);
+  setQuotaNote('quotaNoteUpsell',  quotaData.upsell,    allocUpsell);
+  setQuotaNote('quotaNoteNetNew',  quotaData.netNew,    allocNetNew);
+
+  // The bottom line is now only the per-territory proposed roll-up.
   const remEl = document.getElementById('quotaRemaining');
-  if (totalQuota === 0 && totalProposed === 0) {
+  if (totalProposed === 0) {
     remEl.innerHTML = '';
     remEl.className = '';
     return;
@@ -2625,24 +2689,18 @@ function updateQuotaRemaining() {
   if (totalQuota === 0) {
     cls = 'quota-remaining under';
     label = `${fmt(totalProposed)} proposed across territories — set the plan quota above to track against it`;
-  } else if (Math.abs(remaining) < 0.01) {
-    cls = 'quota-remaining balanced';
-    label = 'Fully allocated';
-  } else if (remaining > 0) {
-    cls = 'quota-remaining under';
-    label = `${fmt(remaining)} unallocated — Renewal: ${fmt(quotaData.renewal - allocRenewal)}, Upsell: ${fmt(quotaData.upsell - allocUpsell)}, Net-New: ${fmt(quotaData.netNew - allocNetNew)}`;
   } else {
-    cls = 'quota-remaining over';
-    label = `Over-allocated by ${fmt(Math.abs(remaining))}`;
-  }
-
-  // Roll-up of the per-territory proposed quotas vs. the plan quota
-  if (totalQuota > 0 && totalProposed > 0) {
     const gap = totalProposed - totalQuota;
-    const gapNote = Math.abs(gap) < 0.01
-      ? 'matches plan quota'
-      : (gap > 0 ? `${fmt(gap)} above plan quota` : `${fmt(Math.abs(gap))} below plan quota`);
-    label += `<div style="margin-top:4px;font-size:0.72rem;opacity:.85">Proposed across territories: ${fmt(totalProposed)} — ${gapNote}</div>`;
+    if (Math.abs(gap) < 0.01) {
+      cls = 'quota-remaining balanced';
+      label = `Proposed across territories: ${fmt(totalProposed)} — matches plan quota`;
+    } else if (gap < 0) {
+      cls = 'quota-remaining under';
+      label = `Proposed across territories: ${fmt(totalProposed)} — ${fmt(Math.abs(gap))} below plan quota`;
+    } else {
+      cls = 'quota-remaining over';
+      label = `Proposed across territories: ${fmt(totalProposed)} — ${fmt(gap)} above plan quota`;
+    }
   }
 
   remEl.className = cls;
