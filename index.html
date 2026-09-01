@@ -1,0 +1,3586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Territory Planner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #1a1a1a;
+    padding: 24px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: #000000;
+    padding: 14px 24px;
+    border-radius: 10px;
+    margin: -24px -24px 24px -24px;
+    border-radius: 0;
+  }
+
+  h1 { font-size: 1.5rem; color: #fff; }
+
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .toolbar input[type="text"] {
+    padding: 6px 12px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    width: 220px;
+    background: #111111;
+    color: #fff;
+  }
+
+  .toolbar input[type="text"]::placeholder {
+    color: #999;
+  }
+
+  .toolbar button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    background: #FA582D;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .toolbar button:hover { background: #C94727; }
+
+  /* Collapsible actions menu */
+  .menu-wrap { position: relative; }
+
+  .menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .menu-btn .caret {
+    font-size: 0.65rem;
+    line-height: 1;
+    transition: transform .15s ease;
+  }
+
+  .menu-wrap.open .menu-btn .caret { transform: rotate(180deg); }
+
+  .actions-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    z-index: 300;
+    min-width: 210px;
+    padding: 6px;
+    background: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+
+  .menu-wrap.open .actions-menu { display: block; }
+
+  .actions-menu .menu-group-label {
+    padding: 8px 10px 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #777;
+  }
+
+  .actions-menu .menu-sep {
+    height: 1px;
+    margin: 6px 4px;
+    background: #333;
+  }
+
+  .actions-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: #e8e8e8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .actions-menu button:hover { background: #2e2e2e; }
+
+  .actions-menu .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #FA582D;
+  }
+
+  /* Upload panel */
+  .upload-panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    padding: 40px;
+    max-width: 560px;
+    margin: 60px auto;
+    text-align: center;
+  }
+
+  .upload-panel h2 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  .upload-panel p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+
+  .drop-zone {
+    border: 2px dashed #d1d5db;
+    border-radius: 10px;
+    padding: 40px 20px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    margin-bottom: 20px;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: #FA582D;
+    background: #FECDC0;
+  }
+
+  .drop-zone .icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .drop-zone .label {
+    font-size: 0.9rem;
+    color: #374151;
+    font-weight: 500;
+  }
+
+  .drop-zone .sub {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  .upload-panel .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .upload-panel button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .upload-panel .btn-primary {
+    background: #FA582D;
+    color: #fff;
+  }
+  .upload-panel .btn-primary:hover { background: #C94727; }
+
+  .upload-panel .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+  }
+  .upload-panel .btn-secondary:hover { background: #d1d5db; }
+
+  .column-mapping {
+    text-align: left;
+    margin-bottom: 20px;
+  }
+
+  .column-mapping label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #374151;
+  }
+
+  .column-mapping select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+  }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  .preview-table th {
+    background: #f3f4f6;
+    padding: 6px 8px;
+    font-weight: 600;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .preview-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .preview-note {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 16px;
+  }
+
+  /* Board */
+  .board {
+    display: flex;
+    gap: 16px;
+    align-items: start;
+    flex-wrap: wrap;
+  }
+
+  .territory {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    flex: 1 1 0;
+    min-width: 160px;
+    transition: box-shadow .15s, min-height .2s, flex .2s;
+  }
+
+  .territory.minimized {
+    min-height: 0;
+  }
+
+  .territory.minimized .territory-body,
+  .territory.minimized .territory-stats {
+    display: none;
+  }
+
+  .territory.t-hidden {
+    display: none;
+  }
+
+  .territory.drag-over {
+    box-shadow: 0 0 0 2px #00C0E8, 0 4px 12px rgba(0,192,232,.25);
+  }
+
+  .territory-header {
+    padding: 0 16px 12px;
+    border-bottom: 2px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .territory-header h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .territory-header h2 .count {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .terr-controls {
+    display: flex;
+    gap: 2px;
+    margin: 0 -16px 8px;
+    padding: 5px 10px;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .terr-controls button {
+    background: #f3f4f6;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    padding: 2px 5px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+
+  .terr-controls button:hover {
+    background: #e5e7eb;
+    color: #111827;
+  }
+
+  .terr-controls button.hide-btn:hover { background: #fef9c3; color: #92400e; }
+  .terr-controls button.delete-btn { color: #f87171; }
+  .terr-controls button.delete-btn:hover { background: #FECDC0; color: #C84624; }
+  .terr-controls button.delete-btn:disabled { color: #d1d5db; background: #f9fafb; cursor: not-allowed; }
+  .terr-controls button.delete-btn:disabled:hover { background: #f9fafb; color: #d1d5db; }
+
+  /* ── Color Picker ── */
+  .color-picker-wrap { position: relative; display: flex; align-items: center; }
+
+  .color-pick-btn {
+    background: transparent; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2px 5px; border-radius: 4px;
+  }
+  .color-pick-btn:hover { background: #e5e7eb; }
+
+  .color-dot {
+    width: 11px; height: 11px; border-radius: 50%; display: block;
+    border: 1.5px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+
+  .color-picker-dropdown {
+    display: none; position: absolute; top: calc(100% + 4px); left: 0;
+    z-index: 200; background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 7px; gap: 5px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    flex-wrap: wrap; width: 106px;
+  }
+  .color-picker-dropdown.open { display: flex; }
+
+  .color-swatch {
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; flex-shrink: 0;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .color-swatch:hover { transform: scale(1.18); }
+  .color-swatch.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px #555;
+  }
+
+  body.dark .color-pick-btn:hover { background: #333; }
+  body.dark .color-picker-dropdown { background: #1c1c1c; border-color: #444; }
+  body.dark .color-swatch.active { border-color: #1c1c1c; box-shadow: 0 0 0 2px #e8e8e8; }
+  body.dark .terr-controls button.delete-btn:disabled { color: #555; background: #2a2a2a; }
+
+  .terr-name {
+    cursor: pointer;
+    border-bottom: 1px dashed transparent;
+  }
+
+  .terr-name:hover {
+    border-bottom-color: #d1d5db;
+  }
+
+  .terr-name-input {
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid #00C0E8;
+    border-radius: 4px;
+    padding: 1px 4px;
+    outline: none;
+    width: 100%;
+    max-width: 140px;
+  }
+
+  .terr-drag-handle {
+    cursor: grab;
+    color: #d1d5db;
+    font-size: 0.8rem;
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  .terr-drag-handle:hover {
+    color: #6b7280;
+  }
+
+  .territory.terr-dragging {
+    opacity: 0.4;
+  }
+
+  .territory.terr-drag-over-left {
+    box-shadow: -3px 0 0 0 #FA582D, 0 1px 3px rgba(0,0,0,.1);
+  }
+
+  .territory.terr-drag-over-right {
+    box-shadow: 3px 0 0 0 #FA582D, 0 1px 3px rgba(0,0,0,.1);
+  }
+
+  .hidden-territories {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .hidden-terr-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: #e5e7eb;
+    color: #374151;
+    cursor: pointer;
+  }
+
+  .hidden-terr-chip:hover {
+    background: #d1d5db;
+  }
+
+  .hidden-terr-chip .chip-ltv {
+    font-weight: 600;
+    color: #FA582D;
+    font-size: 0.72rem;
+  }
+
+  .territory-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+
+  .territory-stats .ts-row {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .territory-stats .tcv {
+    font-weight: 600;
+  }
+
+  .territory-stats .tcv-primary {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+
+  .territory-body {
+    padding: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    max-height: 600px;
+  }
+
+  .account-card {
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: grab;
+    transition: transform .1s, box-shadow .1s;
+    user-select: none;
+  }
+
+  .account-card:active { cursor: grabbing; }
+
+  .account-card.dragging {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+
+  .account-card .name {
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 2px;
+  }
+
+  .account-card .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: #6b7280;
+  }
+
+  .account-card .meta .card-ltv {
+    font-weight: 600;
+    color: #FA582D;
+  }
+
+  .account-card .tcv-grid {
+    display: flex;
+    gap: 8px;
+    margin-top: 3px;
+  }
+
+  .account-card .tcv-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .account-card .tcv-yr {
+    color: #9ca3af;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+  }
+
+  .account-card .tcv-val {
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: #6b7280;
+  }
+
+  .account-card .tcv-val.tcv-primary {
+    color: #FA582D;
+  }
+
+  .account-card .card-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 7px 0 3px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    white-space: nowrap;
+  }
+  .account-card .card-section-title::before,
+  .account-card .card-section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  .account-card .pipeline-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .account-card .pipe-col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .account-card .pipe-yr {
+    color: #9ca3af;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .account-card .pipe-val {
+    font-weight: 600;
+    font-size: 0.7rem;
+    color: #00C0E8;
+  }
+
+  .ts-divider {
+    border-top: 1px dashed #e5e7eb;
+    margin: 3px 0;
+    height: 0;
+    padding: 0;
+  }
+
+  .flag-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .flag-btn {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    background: #f3f4f6;
+    color: #9ca3af;
+    border-color: #e5e7eb;
+    transition: background 0.1s, color 0.1s;
+    user-select: none;
+  }
+
+  .flag-btn:hover { opacity: 0.8; }
+
+  .flag-btn.flag-soc.active       { background: #FBE1A2; color: #7A5700; border-color: #FFCB06; }
+  .flag-btn.flag-retainer.active  { background: #ADD8B1; color: #155226; border-color: #00CC66; }
+  .flag-btn.flag-specproj.active  { background: #DAF0F6; color: #006B8A; border-color: #00C0E8; }
+
+  .ts-flag-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  .ts-flag-chip {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .ts-flag-chip.flag-soc      { background: #FBE1A2; color: #7A5700; }
+  .ts-flag-chip.flag-retainer { background: #ADD8B1; color: #155226; }
+  .ts-flag-chip.flag-specproj { background: #DAF0F6; color: #006B8A; }
+
+  .pipeline-loaded-indicator {
+    font-size: 0.72rem;
+    color: #00C0E8;
+    background: #DAF0F6;
+    border-radius: 5px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    cursor: pointer;
+  }
+
+  .pipeline-loaded-indicator:hover {
+    background: #B6E1EE;
+  }
+
+  .enrich-loaded-indicator {
+    font-size: 0.72rem;
+    color: #FA582D;
+    background: #FDEBD5;
+    border-radius: 5px;
+    padding: 2px 8px;
+    margin-left: 6px;
+    cursor: pointer;
+  }
+  .enrich-loaded-indicator:hover { background: #FACEB0; }
+
+  .enrich-vendor-chip {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f3f4f6;
+    color: #374151;
+    margin: 1px 2px 1px 0;
+    white-space: nowrap;
+  }
+  .enrich-vendor-chip.panw {
+    background: #FDEBD5;
+    color: #FA582D;
+    font-weight: 700;
+  }
+  .enrich-suppliers {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-top: 1px;
+  }
+  .enrich-expand-btn {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: #6b7280;
+    border: none;
+    cursor: pointer;
+    margin: 1px 0 1px 2px;
+    vertical-align: middle;
+  }
+  .enrich-expand-btn:hover { background: #d1d5db; color: #374151; }
+  body.dark .enrich-expand-btn { background: #374151; color: #9ca3af; }
+  body.dark .enrich-expand-btn:hover { background: #4b5563; color: #e5e7eb; }
+  body.dark .enrich-vendor-chip { background: #2a2a2a; color: #d1d5db; }
+  body.dark .enrich-vendor-chip.panw { background: #3a2010; color: #FA8C5A; }
+  body.dark .enrich-suppliers { color: #6b7280; }
+
+  .hidden { display: none !important; }
+
+  /* Quota Calculator */
+  .quota-panel {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    padding: 16px 24px;
+    margin-bottom: 20px;
+  }
+
+  .quota-panel h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .quota-panel h3 .quota-total {
+    font-size: 1rem;
+    color: #FA582D;
+  }
+
+  .quota-toggle {
+    font-size: 0.75rem;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+
+  .quota-toggle:hover { color: #374151; }
+
+  .quota-inputs {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .quota-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .quota-field label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #6b7280;
+  }
+
+  .quota-field input {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    width: 100%;
+  }
+
+  .quota-field input:focus {
+    outline: none;
+    border-color: #00C0E8;
+    box-shadow: 0 0 0 2px rgba(0,192,232,.2);
+  }
+
+  .quota-allocation {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: start;
+  }
+
+  .quota-terr-card {
+    flex: 1;
+    min-width: 160px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .quota-terr-card .qt-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #374151;
+  }
+
+  .quota-terr-card .qt-proposed {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .quota-terr-card .qt-proposed label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: #6b7280;
+  }
+
+  .quota-terr-card .qt-proposed input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .quota-terr-card .qt-proposed input:focus {
+    outline: none;
+    border-color: #00C0E8;
+    box-shadow: 0 0 0 2px rgba(0,192,232,.2);
+  }
+
+  .quota-terr-card .qt-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+  }
+
+  .quota-terr-card .qt-row label {
+    font-size: 0.68rem;
+    color: #6b7280;
+  }
+
+  .quota-terr-card .qt-row input {
+    width: 70px;
+    padding: 3px 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    text-align: right;
+    font-weight: 500;
+  }
+
+  .quota-terr-card .qt-row input:focus {
+    outline: none;
+    border-color: #00C0E8;
+  }
+
+  .quota-terr-card .qt-total {
+    border-top: 1px solid #e5e7eb;
+    margin-top: 4px;
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .quota-terr-card .qt-remaining {
+    margin-top: 5px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .qt-remaining.balanced { background: #ADD8B1; color: #155226; }
+  .qt-remaining.over { background: #FECDC0; color: #A51B00; }
+  .qt-remaining.under { background: #FBE1A2; color: #7A5700; }
+
+  .quota-remaining {
+    font-size: 0.78rem;
+    margin-top: 10px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .quota-remaining.balanced { background: #ADD8B1; color: #155226; }
+  .quota-remaining.over { background: #FECDC0; color: #A51B00; }
+  .quota-remaining.under { background: #FBE1A2; color: #7A5700; }
+
+  .summary-bar {
+    margin-top: 24px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    padding: 16px 24px;
+    display: flex;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .summary-bar .chip {
+    flex: 1;
+    min-width: 130px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border-top-width: 3px;
+  }
+
+  .summary-bar .chip .chip-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .summary-bar .chip .chip-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: #6b7280;
+    margin-bottom: 2px;
+  }
+
+  .summary-bar .chip .chip-row .chip-val {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .summary-bar .chip .chip-row .chip-val.primary {
+    color: #FA582D;
+  }
+
+  .summary-bar .chip .chip-section-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #9ca3af;
+    margin-bottom: 3px;
+  }
+
+  .summary-bar .chip .chip-growth {
+    font-size: 0.65rem;
+    color: #6b7280;
+  }
+
+  .summary-bar .total-ltv {
+    width: 100%;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 10px;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  .summary-bar .total-ltv .total-title {
+    display: block;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9ca3af;
+    margin-bottom: 6px;
+  }
+
+  .summary-bar .total-ltv .total-tcvs {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 6px;
+  }
+
+  .summary-bar .total-ltv .total-tcvs .tcv-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .summary-bar .total-ltv .total-tcvs .tcv-item .tcv-yr {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+  }
+
+  .summary-bar .total-ltv .total-tcvs .tcv-item .tcv-amt {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #000000;
+  }
+
+  .summary-bar .total-ltv .total-tcvs .tcv-item .tcv-amt.tcv-primary {
+    color: #FA582D;
+  }
+
+  .summary-bar .total-ltv .total-growth {
+    font-size: 0.8rem;
+    color: #6b7280;
+  }
+
+  .error-banner {
+    background: #fef2f2;
+    border: 1px solid #FDAC96;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+  }
+
+  /* Update banner — informational, deliberately not the red error styling */
+  .update-banner {
+    background: #E6F8FD;
+    border: 1px solid #7FDFF3;
+    color: #075A6E;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .update-banner .ub-text { flex: 1; min-width: 220px; }
+  .update-banner .ub-title { font-weight: 700; }
+
+  .update-banner .ub-notes {
+    margin: 4px 0 0;
+    padding-left: 18px;
+    font-size: 0.8rem;
+    opacity: .9;
+  }
+
+  .update-banner button {
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    background: #00C0E8;
+    color: #003C49;
+  }
+
+  .update-banner button:hover { background: #00A6C9; }
+
+  .update-banner button.ub-secondary {
+    background: transparent;
+    border-color: #7FDFF3;
+    color: #075A6E;
+  }
+
+  .update-banner button.ub-secondary:hover { background: #D0F1F9; }
+
+  .update-banner button:disabled { opacity: .6; cursor: default; }
+
+  .app-version {
+    font-size: 0.7rem;
+    color: #8a8a8a;
+    font-weight: 500;
+    margin-left: 8px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 700px) {
+    .board { flex-direction: column; }
+    .territory { min-width: 100%; }
+  }
+
+  /* ── Modals ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.5);
+    display: flex; justify-content: center; align-items: center; z-index: 1000;
+  }
+
+  .modal-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.2);
+    padding: 28px; width: 100%; max-width: 500px;
+    max-height: 80vh; overflow-y: auto;
+  }
+
+  .modal-card h3 { font-size: 1.1rem; margin-bottom: 10px; }
+  .modal-card > p { font-size: 0.85rem; color: #6b7280; margin-bottom: 14px; }
+
+  .modal-card input[type="text"] {
+    width: 100%; padding: 9px 12px; border: 1px solid #d1d5db;
+    border-radius: 6px; font-size: 0.875rem; margin-bottom: 4px;
+  }
+  .modal-card input[type="text"]:focus { outline: none; border-color: #FA582D; box-shadow: 0 0 0 2px rgba(250,88,45,.2); }
+
+  .modal-btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* ── Plan list items ── */
+  .plan-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; gap: 12px;
+  }
+  .plan-info { flex: 1; min-width: 0; }
+  .plan-name { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plan-date { font-size: 0.72rem; color: #9ca3af; margin-top: 2px; }
+  .plan-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-danger { background: #FECDC0; color: #C84624; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; padding: 5px 10px; font-size: 0.8rem; }
+  .btn-danger:hover { background: #FDAC96; }
+
+  /* ── User info in header ── */
+  .user-info {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.8rem;
+  }
+
+  /* ── Theme Toggle ── */
+  .theme-toggle {
+    display: flex; align-items: center; gap: 7px; cursor: pointer; user-select: none;
+  }
+  .theme-toggle .toggle-label {
+    font-size: 0.72rem; color: #d1d5db; white-space: nowrap;
+  }
+  .toggle-track {
+    position: relative; width: 34px; height: 18px;
+    background: #444; border-radius: 9px;
+    transition: background 0.2s; flex-shrink: 0;
+  }
+  .toggle-track.on { background: #FA582D; }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; transition: transform 0.2s;
+  }
+  .toggle-track.on .toggle-thumb { transform: translateX(16px); }
+
+  /* ── Dark Theme ── */
+  body.dark { background: #111111; color: #e8e8e8; }
+
+  body.dark .upload-panel,
+  body.dark .quota-panel,
+  body.dark .summary-bar,
+  body.dark .modal-card,
+  body.dark .territory { background: #1c1c1c; }
+
+  body.dark .account-card {
+    background: #252525; border-color: #333333;
+  }
+
+  body.dark .summary-bar .chip,
+  body.dark .quota-terr-card {
+    background: #252525; border-color: #333333;
+  }
+
+  body.dark .plan-item { border-color: #333333; }
+
+  body.dark .upload-panel h2,
+  body.dark .modal-card h3 { color: #e8e8e8; }
+
+  body.dark .upload-panel p,
+  body.dark .modal-card > p { color: #9ca3af; }
+
+  body.dark .drop-zone {
+    border-color: #444444;
+  }
+  body.dark .drop-zone .label { color: #e8e8e8; }
+
+  body.dark .column-mapping label,
+  body.dark .quota-field label { color: #d1d5db; }
+
+  body.dark .column-mapping select,
+  body.dark .quota-field input,
+  body.dark .quota-terr-card .qt-row input,
+  body.dark .quota-terr-card .qt-proposed input,
+  body.dark .modal-card input[type="text"] {
+    background: #2a2a2a; border-color: #444444; color: #e8e8e8;
+  }
+
+  body.dark .quota-terr-card .qt-proposed { border-bottom-color: #444444; }
+  body.dark .quota-terr-card .qt-proposed label { color: #9ca3af; }
+
+  body.dark .preview-table th { background: #2a2a2a; border-bottom-color: #444444; }
+  body.dark .preview-table td { border-bottom-color: #2a2a2a; }
+
+  body.dark .hidden-terr-chip { background: #2a2a2a; color: #e8e8e8; }
+  body.dark .hidden-terr-chip:hover { background: #333333; }
+
+  body.dark .terr-controls button { background: #2a2a2a; color: #9ca3af; }
+  body.dark .terr-controls button:hover { background: #333333; color: #e8e8e8; }
+  body.dark .terr-controls button.delete-btn:hover { background: #3a1f1f; color: #C84624; }
+
+  body.dark .territory-stats,
+  body.dark .account-card .meta,
+  body.dark .account-card .tcv-yr,
+  body.dark .account-card .pipe-yr { color: #9ca3af; }
+
+  body.dark .summary-bar .chip .chip-row,
+  body.dark .summary-bar .chip .chip-growth,
+  body.dark .summary-bar .chip .chip-section-label { color: #6b7280; }
+  body.dark .summary-bar .chip .chip-row .chip-val { color: #e8e8e8; }
+
+  body.dark .quota-terr-card .qt-name { color: #e8e8e8; }
+  body.dark .quota-terr-card .qt-row label { color: #9ca3af; }
+  body.dark .quota-terr-card .qt-total { color: #e8e8e8; border-top-color: #444444; }
+
+  body.dark .quota-panel h3 { color: #e8e8e8; }
+  body.dark .ts-divider { border-top-color: #333333; }
+  body.dark .account-card .card-section-title { color: #6b7280; }
+  body.dark .account-card .card-section-title::before,
+  body.dark .account-card .card-section-title::after { background: #333333; }
+  body.dark .summary-bar { border-top: none; }
+  body.dark .summary-bar .total-ltv { border-top-color: #333333; }
+  body.dark .summary-bar .total-ltv .total-title { color: #6b7280; }
+  body.dark .summary-bar .total-ltv .total-tcvs .tcv-item .tcv-yr { color: #6b7280; }
+  body.dark .summary-bar .total-ltv .total-tcvs .tcv-item .tcv-amt { color: #e8e8e8; }
+  body.dark .summary-bar .total-ltv .total-growth { color: #9ca3af; }
+
+  body.dark .error-banner { background: #2a1515; border-color: #5a2020; color: #f87171; }
+
+  body.dark .update-banner { background: #0d2a33; border-color: #1a5a6e; color: #7FDFF3; }
+  body.dark .update-banner button { background: #00C0E8; color: #003C49; }
+  body.dark .update-banner button.ub-secondary { background: transparent; border-color: #1a5a6e; color: #7FDFF3; }
+  body.dark .update-banner button.ub-secondary:hover { background: #123c49; }
+
+  body.dark .plan-name { color: #e8e8e8; }
+  body.dark .quota-toggle { color: #9ca3af; }
+  body.dark .quota-toggle:hover { color: #e8e8e8; }
+
+  body.dark .btn-secondary { background: #2a2a2a; color: #e8e8e8; border: 1px solid #444; }
+  body.dark .btn-secondary:hover { background: #333333; }
+</style>
+</head>
+<body>
+
+<!-- Upload Panel -->
+<div id="uploadPanel" class="upload-panel hidden">
+  <h2>Sales Territory Planner</h2>
+  <p>Upload a CSV file with your accounts. The file should have columns for Account Name, Territory, and three years of Total Contract Value (FY23 TCV, FY24 TCV, FY25 TCV).</p>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">&#128196;</div>
+    <div class="label">Drop a CSV file here or click to browse</div>
+    <div class="sub">.csv and .tsv (tab-delimited) files supported</div>
+  </div>
+  <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="display:none" />
+
+  <!-- Column mapping (shown after file is parsed) -->
+  <div id="mappingSection" class="hidden">
+    <div class="column-mapping">
+      <label for="colName">Account Name column</label>
+      <select id="colName"></select>
+
+      <label for="colTerritory">Territory column</label>
+      <select id="colTerritory"></select>
+
+      <label for="colTCV23">FY23 Total TCV column</label>
+      <select id="colTCV23"></select>
+
+      <label for="colTCV24">FY24 Total TCV column</label>
+      <select id="colTCV24"></select>
+
+      <label for="colTCV25">FY25 Total TCV column</label>
+      <select id="colTCV25"></select>
+    </div>
+
+    <table class="preview-table" id="previewTable"></table>
+    <div class="preview-note" id="previewNote"></div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="applyMapping()">Load into Planner</button>
+      <button class="btn-secondary" onclick="resetUpload()">Choose Another File</button>
+    </div>
+  </div>
+
+  <div style="margin-top:20px">
+    <button class="btn-secondary" onclick="useSampleData()">Use Sample Data Instead</button>
+  </div>
+</div>
+
+<!-- Main App (hidden until data is loaded) -->
+<div id="app" class="hidden">
+  <header>
+    <h1>Sales Territory Planner<span class="app-version" id="appVersionLabel"></span></h1>
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Search accounts..." />
+
+      <div class="menu-wrap" id="actionsMenuWrap">
+        <button class="menu-btn" onclick="toggleActionsMenu(event)" title="Actions">
+          <span>☰ Actions</span><span class="caret">▼</span>
+        </button>
+        <div class="actions-menu" id="actionsMenu">
+          <div class="menu-group-label">Board</div>
+          <button onclick="addTerritory()"><span class="dot" style="background:#00C0E8"></span>+ Territory</button>
+          <button onclick="resetBoard()"><span class="dot"></span>Reset</button>
+
+          <div class="menu-sep"></div>
+          <div class="menu-group-label">Data</div>
+          <button onclick="loadNewFile()" title="Load a new account file"><span class="dot" style="background:#888888"></span>Load New File</button>
+          <button onclick="triggerImportTerritoryCSV()" title="Import territory plan from CSV"><span class="dot" style="background:#00C0E8"></span>Import CSV</button>
+          <button onclick="triggerPipelineLoad()" title="Load optional pipeline/funnel data CSV"><span class="dot" style="background:#00C0E8"></span>Load Pipeline</button>
+          <button onclick="triggerClariLoad()" title="Load Clari pipeline export CSV"><span class="dot" style="background:#00C0E8"></span>Load Clari</button>
+          <button onclick="triggerEnrichmentFetch()" title="Load department procurement data from GitHub"><span class="dot" style="background:#FA582D"></span>Dept Data</button>
+
+          <div class="menu-sep"></div>
+          <div class="menu-group-label">Plans</div>
+          <button onclick="saveCurrentPlan()"><span class="dot" style="background:#00CC66"></span>Save Plan</button>
+          <button onclick="showSavePlanModal()"><span class="dot" style="background:#238A4D"></span>Save as New</button>
+          <button onclick="showLoadPlansModal()"><span class="dot" style="background:#FA582D"></span>My Plans</button>
+          <button onclick="exportAllData()" title="Download every saved plan and setting as one backup file"><span class="dot" style="background:#00CC66"></span>Backup All Data</button>
+          <button onclick="triggerRestoreBackup()" title="Restore from a backup file (replaces current data)"><span class="dot" style="background:#FFCB06"></span>Restore Backup</button>
+
+          <div class="menu-sep"></div>
+          <div class="menu-group-label">Export</div>
+          <button onclick="generatePDFReport()"><span class="dot" style="background:#C84624"></span>PDF Report</button>
+          <button onclick="exportCSV()"><span class="dot"></span>Export CSV</button>
+
+          <div class="menu-sep"></div>
+          <div class="menu-group-label">App <span id="menuVersionLabel" style="float:right;font-weight:400;text-transform:none"></span></div>
+          <button onclick="checkForUpdate({ force: true })"><span class="dot" style="background:#00C0E8"></span>Check for Updates</button>
+        </div>
+      </div>
+
+      <input type="file" id="importTerritoryFileInput" accept=".csv" style="display:none">
+      <input type="file" id="pipelineFileInput" accept=".csv" style="display:none">
+      <input type="file" id="clariFileInput" accept=".csv" style="display:none">
+      <input type="file" id="restoreBackupFileInput" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="userInfo" class="user-info">
+      <div class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode">
+        <span class="toggle-label">Dark</span>
+        <div class="toggle-track" id="themeTrack"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="errorBanner" class="error-banner hidden"></div>
+  <div id="updateBanner" class="update-banner hidden"></div>
+
+  <div class="quota-panel" id="quotaPanel">
+    <h3>
+      Quota Calculator
+      <span class="quota-total" id="quotaTotalDisplay">Total: $0</span>
+      <button class="quota-toggle" id="quotaToggle" onclick="toggleQuotaPanel()">Expand</button>
+    </h3>
+    <div id="quotaBody" class="hidden">
+      <div class="quota-inputs">
+        <div class="quota-field">
+          <label>Renewal</label>
+          <input type="text" id="quotaRenewal" placeholder="$0" oninput="onQuotaChange()" />
+        </div>
+        <div class="quota-field">
+          <label>Upsell</label>
+          <input type="text" id="quotaUpsell" placeholder="$0" oninput="onQuotaChange()" />
+        </div>
+        <div class="quota-field">
+          <label>Net-New</label>
+          <input type="text" id="quotaNetNew" placeholder="$0" oninput="onQuotaChange()" />
+        </div>
+      </div>
+      <div class="quota-allocation" id="quotaAllocation"></div>
+      <div id="quotaRemaining"></div>
+    </div>
+  </div>
+
+  <div id="hiddenBar" class="hidden-territories hidden"></div>
+  <div class="board" id="board"></div>
+  <div class="summary-bar" id="summary"></div>
+</div>
+
+<!-- Save Plan Modal -->
+<div id="savePlanModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3>Save as New Plan</h3>
+    <p>Give this territory plan a name so you can load it later.</p>
+    <input type="text" id="savePlanName" placeholder="e.g. Q1 2026 Draft"
+           onkeydown="if(event.key==='Enter')saveCloudPlan()" maxlength="80" />
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="hideSavePlanModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveCloudPlan()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Load Plans Modal -->
+<div id="loadPlansModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <h3>My Plans</h3>
+    <div id="plansList"></div>
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="hideLoadPlansModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- GitHub PAT Modal -->
+<div id="githubPatModal" class="modal-overlay hidden">
+  <div class="modal-card" style="max-width:440px">
+    <h3>GitHub Access Token</h3>
+    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:14px">
+      Enter a GitHub Personal Access Token (classic) with <strong>repo</strong> scope to fetch department data from the private <code>norca-sales</code> repo.
+    </p>
+    <input type="password" id="githubPatInput" placeholder="ghp_…"
+           style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:0.9rem;margin-bottom:10px"
+           onkeydown="if(event.key==='Enter')savePatAndFetch()" />
+    <div id="githubPatError" class="error-banner hidden" style="margin-bottom:8px;font-size:0.8rem"></div>
+    <div class="modal-btn-row">
+      <button class="btn-secondary" onclick="hideGithubPatModal()">Cancel</button>
+      <button class="btn-primary" onclick="savePatAndFetch()">Save &amp; Fetch</button>
+    </div>
+    <div style="margin-top:10px;font-size:0.75rem;text-align:center">
+      <a href="#" onclick="clearGithubPat();return false" style="color:#9ca3af">Clear saved token</a>
+    </div>
+  </div>
+</div>
+
+<!-- Enrichment Match Report Modal -->
+<div id="enrichMatchModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-card" style="max-width:min(1100px,95vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;padding:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 16px;border-bottom:1px solid #e5e7eb;flex-shrink:0">
+      <h3 style="margin:0">Dept Data Match Report</h3>
+      <button onclick="document.getElementById('enrichMatchModal').classList.add('hidden')" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:#6b7280;padding:0 4px">✕</button>
+    </div>
+    <div id="enrichMatchBody" style="overflow-y:auto;flex:1;padding:20px 24px"></div>
+    <div style="padding:12px 16px;border-top:1px solid #e5e7eb;display:flex;justify-content:flex-end;flex-shrink:0">
+      <button class="btn-secondary" onclick="if(confirm('Clear department enrichment data?')){enrichmentData={};enrichmentOverrides={};localStorage.removeItem('stp_enrichment');localStorage.removeItem('stp_enrichment_overrides');render(document.getElementById('search').value);updateEnrichmentIndicator();document.getElementById('enrichMatchModal').classList.add('hidden');}">Clear Dept Data</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── App Version ───────────────────────────────────────────────────────
+// Bumped by release.sh. The manifest lives in a small public repo so the
+// update check works without a token; the source repo stays private.
+const APP_VERSION = '1.5.0';
+const UPDATE_MANIFEST_URL =
+  'https://raw.githubusercontent.com/loganlemming/territory-planner-releases/main/version.json';
+const UPDATE_CHECK_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12h
+
+let currentPlanId = null;   // id of the currently loaded local plan
+let currentPlanMeta = null; // { name }
+
+// ── Theme ─────────────────────────────────────────────────────────────
+let isDarkTheme = false;
+
+function applyTheme(dark) {
+  isDarkTheme = dark;
+  document.body.classList.toggle('dark', dark);
+  const track = document.getElementById('themeTrack');
+  if (track) track.classList.toggle('on', dark);
+  localStorage.setItem('stp_theme', dark ? 'dark' : 'light');
+}
+
+function toggleTheme() {
+  applyTheme(!isDarkTheme);
+}
+
+// Apply cached theme immediately to avoid a flash of the light theme
+(function() {
+  const cached = localStorage.getItem('stp_theme');
+  if (cached === 'dark') applyTheme(true);
+})();
+
+// ── App Init ──────────────────────────────────────────────────────────
+function initApp() {
+  const uploadPanel = document.getElementById('uploadPanel');
+  const appEl = document.getElementById('app');
+  if (loadSavedState()) {
+    uploadPanel.classList.add('hidden');
+    appEl.classList.remove('hidden');
+    render();
+    initQuotaUI();
+  } else {
+    uploadPanel.classList.remove('hidden');
+    appEl.classList.add('hidden');
+  }
+  const verEl = document.getElementById('appVersionLabel');
+  if (verEl) verEl.textContent = 'v' + APP_VERSION;
+  const menuVerEl = document.getElementById('menuVersionLabel');
+  if (menuVerEl) menuVerEl.textContent = 'v' + APP_VERSION;
+  checkForUpdate();
+}
+
+// ── Local Plans ──────────────────────────────────────────────────────
+// Named plans are stored locally in the browser (localStorage), keyed by id.
+function getLocalPlans() {
+  try { return JSON.parse(localStorage.getItem('stp_plans') || '{}'); }
+  catch { return {}; }
+}
+
+function setLocalPlans(plans) {
+  localStorage.setItem('stp_plans', JSON.stringify(plans));
+}
+
+function buildPlanData(name) {
+  return {
+    name,
+    savedAt: new Date().toISOString(),
+    territories: JSON.parse(JSON.stringify(territories)),
+    accounts: JSON.parse(JSON.stringify(accounts)),
+    initialAccounts: JSON.parse(JSON.stringify(initialAccounts)),
+    terrStates: JSON.parse(JSON.stringify(terrStates)),
+    quotaData: JSON.parse(JSON.stringify(quotaData)),
+    pipelineData: JSON.parse(JSON.stringify(pipelineData)),
+    enrichmentData: JSON.parse(JSON.stringify(enrichmentData)),
+    enrichmentOverrides: JSON.parse(JSON.stringify(enrichmentOverrides)),
+  };
+}
+
+function saveCurrentPlan() {
+  // No existing plan loaded — fall through to Save as New
+  if (!currentPlanId || !currentPlanMeta) { showSavePlanModal(); return; }
+  const plans = getLocalPlans();
+  plans[currentPlanId] = buildPlanData(currentPlanMeta.name);
+  setLocalPlans(plans);
+  saveState();
+}
+
+function showSavePlanModal() {
+  document.getElementById('savePlanName').value = '';
+  document.getElementById('savePlanModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('savePlanName').focus(), 50);
+}
+
+function hideSavePlanModal() {
+  document.getElementById('savePlanModal').classList.add('hidden');
+}
+
+function saveCloudPlan() {
+  const name = document.getElementById('savePlanName').value.trim();
+  if (!name) { document.getElementById('savePlanName').focus(); return; }
+
+  const id = (crypto?.randomUUID && crypto.randomUUID()) ||
+             ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2));
+  const plans = getLocalPlans();
+  plans[id] = buildPlanData(name);
+  setLocalPlans(plans);
+
+  currentPlanId = id;
+  currentPlanMeta = { name };
+  saveState();
+  hideSavePlanModal();
+}
+
+function fmtPlanDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+function showLoadPlansModal() {
+  document.getElementById('loadPlansModal').classList.remove('hidden');
+  const list = document.getElementById('plansList');
+  const plans = getLocalPlans();
+  const entries = Object.entries(plans).sort((a, b) => new Date(b[1].savedAt) - new Date(a[1].savedAt));
+
+  if (entries.length === 0) {
+    list.innerHTML = '<p style="color:#6b7280;font-size:0.85rem;padding:8px 0">No saved plans yet. Use "Save Plan" to save your current work.</p>';
+    return;
+  }
+
+  list.innerHTML = entries.map(([id, d]) => `<div class="plan-item" id="plan-${id}">
+    <div class="plan-info">
+      <div class="plan-name">${esc(d.name)}</div>
+      <div class="plan-date">${fmtPlanDate(d.savedAt)} &middot; ${d.territories?.length||0} territories, ${d.accounts?.length||0} accounts</div>
+    </div>
+    <div class="plan-actions">
+      <button class="btn-primary" style="padding:5px 14px;font-size:0.8rem" onclick="loadCloudPlan('${id}')">Load</button>
+      <button class="btn-danger" onclick="deleteCloudPlan('${id}',this)">Delete</button>
+    </div>
+  </div>`).join('');
+}
+
+function hideLoadPlansModal() {
+  document.getElementById('loadPlansModal').classList.add('hidden');
+}
+
+function loadCloudPlan(planId) {
+  const d = getLocalPlans()[planId];
+  if (!d) { alert('Plan not found.'); return; }
+
+  territories = d.territories || [];
+  accounts = d.accounts || [];
+  initialAccounts = d.initialAccounts || [];
+  terrStates = d.terrStates || {};
+  quotaData = normalizeQuotaData(d.quotaData);
+  pipelineData = d.pipelineData || {};
+  enrichmentData = d.enrichmentData || {};
+  enrichmentOverrides = d.enrichmentOverrides || {};
+  currentPlanId = planId;
+  currentPlanMeta = { name: d.name };
+
+  saveState();
+  savePipelineData();
+  localStorage.setItem('stp_enrichment', JSON.stringify(enrichmentData));
+  localStorage.setItem('stp_enrichment_overrides', JSON.stringify(enrichmentOverrides));
+  hideLoadPlansModal();
+  document.getElementById('uploadPanel').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  render();
+  initQuotaUI();
+}
+
+function deleteCloudPlan(planId, btn) {
+  if (!confirm('Delete this saved plan? This cannot be undone.')) return;
+  btn.disabled = true;
+  const plans = getLocalPlans();
+  delete plans[planId];
+  setLocalPlans(plans);
+  document.getElementById('plan-' + planId)?.remove();
+  if (currentPlanId === planId) {
+    currentPlanId = null;
+    currentPlanMeta = null;
+    saveState();
+  }
+}
+
+// ── State ───────────────────────────────────────────────────────────
+const ACCENT_COLORS = ['#FA582D', '#00C0E8', '#FFCB06', '#00CC66', '#238A4D', '#C84624', '#00AEC4'];
+
+const ICON_COLLAPSE = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+const ICON_EXPAND   = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+const ICON_HIDE     = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+const ICON_TRASH    = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+
+let territories = [];
+let accounts = [];
+let initialAccounts = [];
+let draggedId = null;       // dragged account id
+let draggedTerrId = null;   // dragged territory id
+let terrStates = {}; // { territoryId: 'visible' | 'minimized' | 'hidden' }
+
+// Pipeline enrichment data (keyed by normalized account name)
+let pipelineData = {}; // { 'account name lowercase': { fy26Bookings, fy26Funnel, fy27Funnel } }
+let pipelineSource = 'csv'; // 'csv' | 'clari'
+
+// GitHub dept enrichment data (keyed by enrichmentKey — name with "california" prefix stripped)
+let enrichmentData = {}; // { key: { spend, contractCount, topSuppliers, techVendors } }
+let enrichmentOverrides = {}; // { accountKey: jsonRecordKey } — manual matches from report modal
+
+// CSV parsing state
+let parsedHeaders = [];
+let parsedRows = [];
+
+// ── CSV Parser ──────────────────────────────────────────────────────
+function detectDelimiter(text) {
+  const firstLine = text.split(/\r?\n/)[0];
+  const tabs = (firstLine.match(/\t/g) || []).length;
+  const commas = (firstLine.match(/,/g) || []).length;
+  return tabs > commas ? '\t' : ',';
+}
+
+function parseCSV(text) {
+  const delimiter = detectDelimiter(text);
+  const rows = [];
+  let current = '';
+  let inQuotes = false;
+  let row = [];
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (inQuotes) {
+      if (ch === '"' && next === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === delimiter) {
+        row.push(current.trim());
+        current = '';
+      } else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+        row.push(current.trim());
+        current = '';
+        if (row.some(c => c !== '')) rows.push(row);
+        row = [];
+        if (ch === '\r') i++;
+      } else {
+        current += ch;
+      }
+    }
+  }
+  // Last row
+  row.push(current.trim());
+  if (row.some(c => c !== '')) rows.push(row);
+
+  return rows;
+}
+
+// ── File Handling ───────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const allRows = parseCSV(e.target.result);
+    if (allRows.length < 2) {
+      alert('The CSV file appears to be empty or has no data rows.');
+      return;
+    }
+
+    parsedHeaders = allRows[0];
+    parsedRows = allRows.slice(1);
+
+    // Populate column mapping dropdowns
+    populateSelect('colName', parsedHeaders, guessColumn(parsedHeaders, ['account_name', 'account name', 'accountname', 'account', 'name', 'company']));
+    populateSelect('colTerritory', parsedHeaders, guessColumn(parsedHeaders, ['fy26 g6 rep territory final', 'ent_territory_name', 'territory', 'region', 'area', 'territory name']));
+    populateSelect('colTCV23', parsedHeaders, guessColumn(parsedHeaders, ['fy23 total bookings tcv', 'fy23totalbookingstcv', 'fy23 total', 'fy23']));
+    populateSelect('colTCV24', parsedHeaders, guessColumn(parsedHeaders, ['fy24 total bookings tcv', 'fy24totalbookingstcv', 'fy24 total', 'fy24']));
+    populateSelect('colTCV25', parsedHeaders, guessColumn(parsedHeaders, ['fy25 bookings (tcv)', 'fy25bookingstcv', 'fy25 bookings tcv', 'fy25 total', 'fy25']));
+
+    showPreview();
+    document.getElementById('mappingSection').classList.remove('hidden');
+  };
+  reader.readAsText(file);
+}
+
+function populateSelect(selectId, headers, bestGuess) {
+  const sel = document.getElementById(selectId);
+  sel.innerHTML = '';
+  headers.forEach((h, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = h;
+    if (i === bestGuess) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', showPreview);
+}
+
+function guessColumn(headers, keywords) {
+  const lower = headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  for (const kw of keywords) {
+    const clean = kw.replace(/[^a-z0-9]/g, '');
+    const idx = lower.findIndex(h => h === clean);
+    if (idx !== -1) return idx;
+  }
+  for (const kw of keywords) {
+    const clean = kw.replace(/[^a-z0-9]/g, '');
+    const idx = lower.findIndex(h => h.includes(clean));
+    if (idx !== -1) return idx;
+  }
+  return 0;
+}
+
+function showPreview() {
+  const nameIdx = +document.getElementById('colName').value;
+  const terrIdx = +document.getElementById('colTerritory').value;
+  const tcv23Idx = +document.getElementById('colTCV23').value;
+  const tcv24Idx = +document.getElementById('colTCV24').value;
+  const tcv25Idx = +document.getElementById('colTCV25').value;
+
+  const table = document.getElementById('previewTable');
+  let html = '<tr><th>Account Name</th><th>Territory</th><th>FY23 TCV</th><th>FY24 TCV</th><th>FY25 TCV</th></tr>';
+
+  const previewCount = Math.min(parsedRows.length, 5);
+  for (let i = 0; i < previewCount; i++) {
+    const r = parsedRows[i];
+    html += `<tr>
+      <td>${esc(r[nameIdx] || '')}</td>
+      <td>${esc(r[terrIdx] || '')}</td>
+      <td>${esc(r[tcv23Idx] || '')}</td>
+      <td>${esc(r[tcv24Idx] || '')}</td>
+      <td>${esc(r[tcv25Idx] || '')}</td>
+    </tr>`;
+  }
+  table.innerHTML = html;
+  document.getElementById('previewNote').textContent =
+    `Showing ${previewCount} of ${parsedRows.length} rows. Verify the column mapping above is correct.`;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function resetUpload() {
+  parsedHeaders = [];
+  parsedRows = [];
+  document.getElementById('mappingSection').classList.add('hidden');
+  document.getElementById('fileInput').value = '';
+}
+
+function loadNewFile() {
+  clearSavedState();
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('uploadPanel').classList.remove('hidden');
+  resetUpload();
+}
+
+// ── Apply Mapping & Build Board ─────────────────────────────────────
+function applyMapping() {
+  const nameIdx = +document.getElementById('colName').value;
+  const terrIdx = +document.getElementById('colTerritory').value;
+  const tcv23Idx = +document.getElementById('colTCV23').value;
+  const tcv24Idx = +document.getElementById('colTCV24').value;
+  const tcv25Idx = +document.getElementById('colTCV25').value;
+
+  // Extract unique territory names (preserve order of first appearance)
+  const terrNames = [];
+  parsedRows.forEach(r => {
+    const t = (r[terrIdx] || '').trim();
+    if (t && !terrNames.includes(t)) terrNames.push(t);
+  });
+
+  if (terrNames.length === 0) {
+    alert('No territory values found. Check your column mapping.');
+    return;
+  }
+
+  // Build territory objects (up to 5 from the file, but allow more if present)
+  territories = terrNames.map((name, i) => ({
+    id: 't' + i,
+    name: name,
+    accent: ACCENT_COLORS[i % ACCENT_COLORS.length],
+  }));
+
+  // Build accounts
+  const terrLookup = Object.fromEntries(terrNames.map((n, i) => [n, 't' + i]));
+
+  accounts = parsedRows.map((r, i) => {
+    const parseTCV = col => parseFloat((r[col] || '').replace(/[^0-9.\-]/g, '')) || 0;
+    return {
+      id: 'a' + i,
+      name: (r[nameIdx] || '').trim() || `Account ${i + 1}`,
+      tcv23: parseTCV(tcv23Idx),
+      tcv24: parseTCV(tcv24Idx),
+      tcv25: parseTCV(tcv25Idx),
+      territory: terrLookup[(r[terrIdx] || '').trim()] || territories[0].id,
+    };
+  });
+
+  initialAccounts = JSON.parse(JSON.stringify(accounts));
+  terrStates = {};
+  saveState();
+  // Clear any previously loaded pipeline data when loading a new account file
+  pipelineData = {};
+  localStorage.removeItem('stp_pipeline');
+
+  document.getElementById('uploadPanel').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  render();
+  initQuotaUI();
+}
+
+// ── Sample Data ─────────────────────────────────────────────────────
+function useSampleData() {
+  territories = [
+    { id: 't0', name: 'West',      accent: '#FA582D' },
+    { id: 't1', name: 'Central',   accent: '#00C0E8' },
+    { id: 't2', name: 'East',      accent: '#FFCB06' },
+    { id: 't3', name: 'South',     accent: '#00CC66' },
+    { id: 't4', name: 'Northeast', accent: '#238A4D' },
+  ];
+
+  accounts = [
+    { id: 'a0',  name: 'Acme Corp',         tcv23: 210000, tcv24: 225000, tcv25: 245000, territory: 't0' },
+    { id: 'a1',  name: 'Globex Inc',        tcv23: 155000, tcv24: 168000, tcv25: 182000, territory: 't0' },
+    { id: 'a2',  name: 'Initech LLC',       tcv23: 80000,  tcv24: 88000,  tcv25: 97000,  territory: 't0' },
+    { id: 'a3',  name: 'LexCorp',           tcv23: 340000, tcv24: 365000, tcv25: 390000, territory: 't0' },
+    { id: 'a4',  name: 'Stark Industries',  tcv23: 450000, tcv24: 490000, tcv25: 530000, territory: 't1' },
+    { id: 'a5',  name: 'Wayne Enterprises', tcv23: 350000, tcv24: 380000, tcv25: 410000, territory: 't1' },
+    { id: 'a6',  name: 'Umbrella Corp',     tcv23: 280000, tcv24: 300000, tcv25: 320000, territory: 't1' },
+    { id: 'a7',  name: 'Weyland-Yutani',    tcv23: 510000, tcv24: 545000, tcv25: 580000, territory: 't1' },
+    { id: 'a8',  name: 'Soylent Corp',      tcv23: 70000,  tcv24: 79000,  tcv25: 88000,  territory: 't2' },
+    { id: 'a9',  name: 'Cyberdyne Systems', tcv23: 240000, tcv24: 257000, tcv25: 275000, territory: 't2' },
+    { id: 'a10', name: 'Oscorp',            tcv23: 170000, tcv24: 182000, tcv25: 195000, territory: 't2' },
+    { id: 'a11', name: 'Tyrell Corp',       tcv23: 390000, tcv24: 415000, tcv25: 440000, territory: 't2' },
+    { id: 'a12', name: 'Wonka Industries',  tcv23: 130000, tcv24: 140000, tcv25: 150000, territory: 't3' },
+    { id: 'a13', name: 'Massive Dynamic',   tcv23: 420000, tcv24: 455000, tcv25: 490000, territory: 't3' },
+    { id: 'a14', name: 'Hooli',             tcv23: 270000, tcv24: 290000, tcv25: 310000, territory: 't3' },
+    { id: 'a15', name: 'Aperture Science',  tcv23: 190000, tcv24: 202000, tcv25: 215000, territory: 't3' },
+    { id: 'a16', name: 'Pied Piper',        tcv23: 60000,  tcv24: 66000,  tcv25: 72000,  territory: 't4' },
+    { id: 'a17', name: 'Dunder Mifflin',    tcv23: 45000,  tcv24: 50000,  tcv25: 55000,  territory: 't4' },
+    { id: 'a18', name: 'Sterling Cooper',   tcv23: 110000, tcv24: 119000, tcv25: 128000, territory: 't4' },
+    { id: 'a19', name: 'Bluth Company',     tcv23: 52000,  tcv24: 57000,  tcv25: 63000,  territory: 't4' },
+  ];
+
+  initialAccounts = JSON.parse(JSON.stringify(accounts));
+  saveState();
+
+  terrStates = {};
+  document.getElementById('uploadPanel').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  render();
+  initQuotaUI();
+}
+
+// ── Persistence ─────────────────────────────────────────────────────
+function saveState() {
+  localStorage.setItem('stp_territories', JSON.stringify(territories));
+  localStorage.setItem('stp_accounts', JSON.stringify(accounts));
+  localStorage.setItem('stp_initialAccounts', JSON.stringify(initialAccounts));
+  localStorage.setItem('stp_terrStates', JSON.stringify(terrStates));
+  if (currentPlanId) localStorage.setItem('stp_current_plan_id', currentPlanId);
+  if (currentPlanMeta) localStorage.setItem('stp_current_plan_meta', JSON.stringify(currentPlanMeta));
+}
+
+function loadSavedState() {
+  const t = localStorage.getItem('stp_territories');
+  const a = localStorage.getItem('stp_accounts');
+  const ia = localStorage.getItem('stp_initialAccounts');
+  if (!t || !a || !ia) return false;
+
+  try {
+    territories = JSON.parse(t);
+    accounts = JSON.parse(a);
+    initialAccounts = JSON.parse(ia);
+    // Clear state if saved in old single-LTV format
+    if (accounts.length > 0 && accounts[0].ltv !== undefined) {
+      clearSavedState();
+      return false;
+    }
+    const ts = localStorage.getItem('stp_terrStates');
+    terrStates = ts ? JSON.parse(ts) : {};
+    const pd = localStorage.getItem('stp_pipeline');
+    pipelineData = pd ? JSON.parse(pd) : {};
+    const ed = localStorage.getItem('stp_enrichment');
+    enrichmentData = ed ? JSON.parse(ed) : {};
+    const eo = localStorage.getItem('stp_enrichment_overrides');
+    enrichmentOverrides = eo ? JSON.parse(eo) : {};
+    currentPlanId = localStorage.getItem('stp_current_plan_id') || null;
+    const cpm = localStorage.getItem('stp_current_plan_meta');
+    currentPlanMeta = cpm ? JSON.parse(cpm) : null;
+    return territories.length > 0 && accounts.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+function clearSavedState() {
+  localStorage.removeItem('stp_territories');
+  localStorage.removeItem('stp_accounts');
+  localStorage.removeItem('stp_initialAccounts');
+  localStorage.removeItem('stp_terrStates');
+  localStorage.removeItem('stp_quota');
+  localStorage.removeItem('stp_pipeline');
+  pipelineData = {};
+}
+
+// ── Formatting ──────────────────────────────────────────────────────
+function fmt(n) {
+  return '$' + n.toLocaleString('en-US');
+}
+
+// ── Territory Management ─────────────────────────────────────────────
+function getTerrState(id) {
+  return terrStates[id] || 'visible';
+}
+
+function toggleMinimize(id) {
+  const cur = getTerrState(id);
+  terrStates[id] = cur === 'minimized' ? 'visible' : 'minimized';
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function hideTerritory(id) {
+  terrStates[id] = 'hidden';
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function showTerritory(id) {
+  terrStates[id] = 'visible';
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function addTerritory() {
+  const name = prompt('Enter a name for the new territory:');
+  if (!name || !name.trim()) return;
+
+  const maxId = territories.reduce((m, t) => {
+    const n = parseInt(t.id.slice(1), 10);
+    return n > m ? n : m;
+  }, -1);
+
+  territories.push({
+    id: 't' + (maxId + 1),
+    name: name.trim(),
+    accent: ACCENT_COLORS[territories.length % ACCENT_COLORS.length],
+  });
+
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function renameTerritory(id) {
+  const t = territories.find(x => x.id === id);
+  if (!t) return;
+
+  // Replace the name span with an input
+  const nameEl = document.querySelector(`.territory[data-territory="${id}"] .terr-name`);
+  if (!nameEl) return;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'terr-name-input';
+  input.value = t.name;
+
+  const commit = () => {
+    const val = input.value.trim();
+    if (val && val !== t.name) {
+      t.name = val;
+      saveState();
+    }
+    render(document.getElementById('search').value);
+  };
+
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { render(document.getElementById('search').value); }
+  });
+
+  nameEl.replaceWith(input);
+  input.focus();
+  input.select();
+}
+
+function deleteTerritory(id) {
+  const count = accounts.filter(a => a.territory === id).length;
+  if (count > 0) {
+    alert('Cannot delete a territory that still has accounts. Move all accounts out first.');
+    return;
+  }
+
+  territories = territories.filter(t => t.id !== id);
+  delete terrStates[id];
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function toggleColorPicker(e, terrId) {
+  e.stopPropagation();
+  const dpd = document.getElementById('cpd-' + terrId);
+  const isOpen = dpd.classList.contains('open');
+  // Close all open pickers first
+  document.querySelectorAll('.color-picker-dropdown.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) dpd.classList.add('open');
+}
+
+function changeTerrColor(terrId, color) {
+  const t = territories.find(t => t.id === terrId);
+  if (!t) return;
+  t.accent = color;
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+// Close any open color picker when clicking elsewhere
+document.addEventListener('click', () => {
+  document.querySelectorAll('.color-picker-dropdown.open').forEach(el => el.classList.remove('open'));
+});
+
+// ── Actions menu ────────────────────────────────────────────────────
+function toggleActionsMenu(event) {
+  event.stopPropagation();
+  document.getElementById('actionsMenuWrap').classList.toggle('open');
+}
+
+function closeActionsMenu() {
+  const wrap = document.getElementById('actionsMenuWrap');
+  if (wrap) wrap.classList.remove('open');
+}
+
+// Collapse the menu after picking an item, or when clicking outside it
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('actionsMenuWrap');
+  if (!wrap || !wrap.classList.contains('open')) return;
+  if (wrap.contains(e.target) && !e.target.closest('.actions-menu button')) return;
+  closeActionsMenu();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeActionsMenu();
+});
+
+// ── Quota Calculator ────────────────────────────────────────────────
+let quotaData = { renewal: 0, upsell: 0, netNew: 0, allocations: {} };
+// allocations: { territoryId: { proposed: 0, renewal: 0, upsell: 0, netNew: 0 } }
+// proposed = the territory's total quota; renewal/upsell/netNew break it down.
+
+// Fills in any missing fields so plans saved before a field existed still load.
+function normalizeQuotaData(d) {
+  const q = d || {};
+  return {
+    renewal: q.renewal || 0,
+    upsell: q.upsell || 0,
+    netNew: q.netNew || 0,
+    allocations: q.allocations || {}
+  };
+}
+
+function loadQuotaData() {
+  const saved = localStorage.getItem('stp_quota');
+  if (saved) {
+    try { quotaData = normalizeQuotaData(JSON.parse(saved)); } catch {}
+  }
+}
+
+function saveQuotaData() {
+  localStorage.setItem('stp_quota', JSON.stringify(quotaData));
+}
+
+// ── Pipeline Data Enrichment ─────────────────────────────────────────
+
+function triggerPipelineLoad() {
+  document.getElementById('pipelineFileInput').click();
+}
+
+function triggerClariLoad() {
+  document.getElementById('clariFileInput').click();
+}
+
+document.getElementById('clariFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  this.value = '';
+  const reader = new FileReader();
+  reader.onload = ev => processClariCSV(ev.target.result);
+  reader.readAsText(file);
+});
+
+function processClariCSV(text) {
+  const lines = parseCSV(text);
+  if (lines.length < 2) { alert('Clari CSV appears to be empty.'); return; }
+
+  const headers = lines[0].map(h => h.trim());
+  const rows = lines.slice(1);
+
+  const nameIdx  = findPipelineCol(headers, ['account name', 'accountname', 'account']);
+  const amtIdx   = findPipelineCol(headers, ['amount']);
+  const stageIdx = findPipelineCol(headers, ['stage']);
+  const dateIdx  = findPipelineCol(headers, ['core close date', 'closecoredate', 'close date', 'closedate']);
+
+  if (nameIdx  === -1) { alert('Could not find Account Name column in Clari CSV.'); return; }
+  if (stageIdx === -1) { alert('Could not find Stage column in Clari CSV.'); return; }
+  if (dateIdx  === -1) { alert('Could not find Core Close Date column in Clari CSV.'); return; }
+
+  const FY27_CUTOFF = new Date('2026-08-01');
+  pipelineData = {};
+
+  rows.forEach(r => {
+    const name = normalizeName(r[nameIdx]);
+    if (!name) return;
+    const amount    = amtIdx >= 0 ? parsePipelineCurrency(r[amtIdx]) : 0;
+    const stage     = (r[stageIdx] || '').trim();
+    const closeDate = new Date(r[dateIdx]);
+
+    if (!pipelineData[name]) {
+      pipelineData[name] = { fy26Bookings: null, fy26Funnel: null, fy27Funnel: null };
+    }
+    const entry = pipelineData[name];
+
+    if (stage === '10 - Closed - Won') {
+      entry.fy26Bookings = (entry.fy26Bookings || 0) + amount;
+    } else if (!isNaN(closeDate) && closeDate >= FY27_CUTOFF) {
+      entry.fy27Funnel = (entry.fy27Funnel || 0) + amount;
+    } else {
+      entry.fy26Funnel = (entry.fy26Funnel || 0) + amount;
+    }
+  });
+
+  pipelineSource = 'clari';
+  savePipelineData();
+  const matchCount = accounts.filter(a => pipelineData[normalizeName(a.name)]).length;
+  render(document.getElementById('search').value);
+  updatePipelineIndicator();
+  alert(`Clari data loaded. Matched ${matchCount} of ${accounts.length} accounts.`);
+}
+
+function normalizeName(name) {
+  return (name || '').trim().toLowerCase();
+}
+
+function enrichmentKey(name) {
+  return normalizeName(name).replace(/^(state of california|california)\s+/, '');
+}
+
+function getEnrichment(accountName) {
+  const key = enrichmentKey(accountName);
+  return enrichmentData[key] || (enrichmentOverrides[key] ? enrichmentData[enrichmentOverrides[key]] : null) || null;
+}
+
+function parsePipelineCurrency(str) {
+  const v = parseFloat((str || '').replace(/[^0-9.\-]/g, ''));
+  return isNaN(v) ? 0 : v;
+}
+
+document.getElementById('pipelineFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  this.value = ''; // reset so same file can be reloaded
+  const reader = new FileReader();
+  reader.onload = ev => processPipelineCSV(ev.target.result);
+  reader.readAsText(file);
+});
+
+function findPipelineCol(headers, keywords) {
+  // Returns the index if found, or -1 if no match (guessColumn returns 0 as fallback)
+  const lower = headers.map(h => h.toLowerCase().replace(/[^a-z0-9]/g, ''));
+  for (const kw of keywords) {
+    const clean = kw.replace(/[^a-z0-9]/g, '');
+    const idx = lower.findIndex(h => h === clean);
+    if (idx !== -1) return idx;
+  }
+  for (const kw of keywords) {
+    const clean = kw.replace(/[^a-z0-9]/g, '');
+    const idx = lower.findIndex(h => h.includes(clean));
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function processPipelineCSV(text) {
+  const lines = parseCSV(text);
+  if (lines.length < 2) { alert('Pipeline CSV appears to be empty.'); return; }
+
+  const headers = lines[0].map(h => h.trim());
+  const rows = lines.slice(1);
+
+  // Auto-detect columns
+  const nameIdx = findPipelineCol(headers, ['account name', 'accountname', 'account', 'name']);
+  const fy26BookIdx = findPipelineCol(headers, ['fy26 total bookings', 'fy26totalbookings', 'fy26 bookings', 'fy26bookings']);
+  const fy26FunnelIdx = findPipelineCol(headers, ['fy26 total funnel', 'fy26totalfunnel', 'fy26 funnel', 'fy26funnel']);
+  const fy27FunnelIdx = findPipelineCol(headers, ['fy27 total funnel', 'fy27totalfunnel', 'fy27 funnel', 'fy27funnel']);
+
+  if (nameIdx === -1) {
+    alert('Could not find an Account Name column in the pipeline CSV.');
+    return;
+  }
+
+  pipelineData = {};
+  rows.forEach(r => {
+    const name = normalizeName(r[nameIdx]);
+    if (!name) return;
+    pipelineData[name] = {
+      fy26Bookings: fy26BookIdx >= 0 ? parsePipelineCurrency(r[fy26BookIdx]) : null,
+      fy26Funnel:   fy26FunnelIdx >= 0 ? parsePipelineCurrency(r[fy26FunnelIdx]) : null,
+      fy27Funnel:   fy27FunnelIdx >= 0 ? parsePipelineCurrency(r[fy27FunnelIdx]) : null,
+    };
+  });
+
+  savePipelineData();
+
+  const matchCount = accounts.filter(a => pipelineData[normalizeName(a.name)]).length;
+  render(document.getElementById('search').value);
+  updatePipelineIndicator();
+  alert(`Pipeline data loaded. Matched ${matchCount} of ${accounts.length} accounts.`);
+}
+
+function savePipelineData() {
+  localStorage.setItem('stp_pipeline', JSON.stringify(pipelineData));
+  localStorage.setItem('stp_pipeline_source', pipelineSource);
+}
+
+function loadPipelineData() {
+  const saved = localStorage.getItem('stp_pipeline');
+  if (saved) {
+    try { pipelineData = JSON.parse(saved); } catch { pipelineData = {}; }
+  }
+  pipelineSource = localStorage.getItem('stp_pipeline_source') || 'csv';
+}
+
+function clearPipelineData() {
+  pipelineData = {};
+  pipelineSource = 'csv';
+  localStorage.removeItem('stp_pipeline');
+  localStorage.removeItem('stp_pipeline_source');
+  render(document.getElementById('search').value);
+  updatePipelineIndicator();
+}
+
+function updatePipelineIndicator() {
+  const existing = document.getElementById('pipelineIndicator');
+  const toolbar = document.querySelector('.toolbar');
+  if (!toolbar) return;
+
+  if (Object.keys(pipelineData).length > 0) {
+    const matchCount = accounts.filter(a => pipelineData[normalizeName(a.name)]).length;
+    const label = pipelineSource === 'clari' ? 'Clari' : 'Pipeline';
+    if (existing) {
+      existing.textContent = `${label}: ${matchCount} matched ✕`;
+    } else {
+      const span = document.createElement('span');
+      span.id = 'pipelineIndicator';
+      span.className = 'pipeline-loaded-indicator';
+      span.title = 'Click to clear pipeline data';
+      span.textContent = `${label}: ${matchCount} matched ✕`;
+      span.onclick = () => { if (confirm('Clear pipeline data?')) clearPipelineData(); };
+      toolbar.appendChild(span);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
+// ── GitHub Dept Enrichment ───────────────────────────────────────────
+
+function triggerEnrichmentFetch() {
+  const pat = localStorage.getItem('stp_github_pat');
+  if (!pat) {
+    showGithubPatModal();
+  } else {
+    fetchEnrichmentData(pat);
+  }
+}
+
+function showGithubPatModal() {
+  const inp = document.getElementById('githubPatInput');
+  const existing = localStorage.getItem('stp_github_pat') || '';
+  if (inp) { inp.value = existing; }
+  document.getElementById('githubPatError').classList.add('hidden');
+  document.getElementById('githubPatModal').classList.remove('hidden');
+  setTimeout(() => inp && inp.focus(), 50);
+}
+
+function hideGithubPatModal() {
+  document.getElementById('githubPatModal').classList.add('hidden');
+}
+
+function clearGithubPat() {
+  localStorage.removeItem('stp_github_pat');
+  hideGithubPatModal();
+}
+
+async function savePatAndFetch() {
+  const inp = document.getElementById('githubPatInput');
+  const pat = (inp?.value || '').trim();
+  const errEl = document.getElementById('githubPatError');
+  if (!pat) { errEl.textContent = 'Please enter a token.'; errEl.classList.remove('hidden'); return; }
+  localStorage.setItem('stp_github_pat', pat);
+  hideGithubPatModal();
+  await fetchEnrichmentData(pat);
+}
+
+async function fetchEnrichmentData(pat) {
+  const deptBtn = document.querySelector('[onclick="triggerEnrichmentFetch()"]');
+  const origText = deptBtn ? deptBtn.textContent : '';
+  const headers = { Authorization: `token ${pat}`, Accept: 'application/vnd.github+json' };
+
+  try {
+    if (deptBtn) { deptBtn.textContent = 'Fetching…'; deptBtn.disabled = true; }
+
+    const listResp = await fetch(
+      'https://api.github.com/repos/jpaulsense/norca-sales/contents/ca-departments',
+      { headers }
+    );
+    if (!listResp.ok) {
+      if (listResp.status === 401) { showGithubPatModal(); return; }
+      throw new Error(`GitHub API error ${listResp.status}`);
+    }
+    const files = await listResp.json();
+
+    const results = {};
+    const BATCH = 10;
+    let done = 0;
+    for (let i = 0; i < files.length; i += BATCH) {
+      const batch = files.slice(i, i + BATCH);
+      await Promise.all(batch.map(async file => {
+        try {
+          const resp = await fetch(file.url, { headers });
+          if (!resp.ok) return;
+          const raw = await resp.json();
+          const content = JSON.parse(atob(raw.content.replace(/\n/g, '')));
+          const key = enrichmentKey(content.name || '');
+          if (!key) return;
+          const proc = content.procurement || {};
+          const pp = (content.comprehensive_profile || {}).procurement_profile || {};
+          results[key] = {
+            spend: proc.total_spend_12mo ?? null,
+            contractCount: proc.contract_count_12mo ?? null,
+            topSuppliers: (proc.top_suppliers || []).slice(0, 3).map(s => s.name),
+            techVendors: pp.key_technology_vendors || []
+          };
+        } catch { /* skip malformed files */ }
+        done++;
+        if (deptBtn) deptBtn.textContent = `Fetching… ${done}/${files.length}`;
+      }));
+    }
+
+    enrichmentData = results;
+    localStorage.setItem('stp_enrichment', JSON.stringify(results));
+    render(document.getElementById('search').value);
+    updateEnrichmentIndicator();
+  } catch (e) {
+    alert(`Failed to fetch dept data: ${e.message}`);
+  } finally {
+    if (deptBtn) { deptBtn.textContent = origText; deptBtn.disabled = false; }
+  }
+}
+
+function toggleEnrichVendors(vendorId) {
+  const extra = document.getElementById(`${vendorId}-extra`);
+  const btn   = document.getElementById(`${vendorId}-btn`);
+  if (!extra || !btn) return;
+  const expanding = extra.classList.contains('hidden');
+  extra.classList.toggle('hidden', !expanding);
+  btn.textContent = expanding ? '−' : `+${extra.querySelectorAll('.enrich-vendor-chip').length}`;
+}
+
+function showEnrichMatchReport() {
+  const enrichKeys = new Set(Object.keys(enrichmentData));
+  const matched    = accounts.filter(a => getEnrichment(a.name)).sort((a, b) => a.name.localeCompare(b.name));
+  const unmatched  = accounts.filter(a => !getEnrichment(a.name)).sort((a, b) => a.name.localeCompare(b.name));
+  const accountKeys = new Set(accounts.map(a => enrichmentKey(a.name)));
+  const usedOverrides = new Set(Object.values(enrichmentOverrides));
+  const orphanKeys  = [...enrichKeys].filter(k => !accountKeys.has(k) && !usedOverrides.has(k)).sort();
+  const sortedJsonKeys = Object.keys(enrichmentData).sort();
+
+  document.getElementById('enrichMatchBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;height:100%;min-height:0">
+
+      <div style="overflow-y:auto;padding:0 16px 16px 0;border-right:1px solid #e5e7eb">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#00CC66;margin-bottom:10px;position:sticky;top:0;background:#fff;padding-top:2px">
+          Matched Depts (${matched.length})
+        </div>
+        ${matched.map(a => `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid #f3f4f6">${a.name}</div>`).join('') || '<em style="font-size:12px;color:#9ca3af">None</em>'}
+      </div>
+
+      <div style="overflow-y:auto;padding:0 16px;border-right:1px solid #e5e7eb">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#C84624;margin-bottom:10px;position:sticky;top:0;background:#fff;padding-top:2px">
+          Unmatched Depts (${unmatched.length})
+        </div>
+        ${unmatched.map(a => {
+          const ak = enrichmentKey(a.name);
+          const current = enrichmentOverrides[ak] || '';
+          return `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid #f3f4f6">
+            <div style="margin-bottom:4px">${a.name}</div>
+            <select onchange="applyEnrichmentOverride('${ak}', this.value)"
+                    style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d1d5db;border-radius:4px;background:#fff">
+              <option value="">— no match —</option>
+              ${sortedJsonKeys.map(k => `<option value="${k}"${current === k ? ' selected' : ''}>${k}</option>`).join('')}
+            </select>
+          </div>`;
+        }).join('') || '<em style="font-size:12px;color:#9ca3af">None</em>'}
+      </div>
+
+      <div style="overflow-y:auto;padding:0 0 16px 16px">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin-bottom:10px;position:sticky;top:0;background:#fff;padding-top:2px">
+          JSON w/o Account Match (${orphanKeys.length})
+        </div>
+        ${orphanKeys.map(k => `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid #f3f4f6">${k}</div>`).join('') || '<em style="font-size:12px;color:#9ca3af">None</em>'}
+      </div>
+
+    </div>
+  `;
+  document.getElementById('enrichMatchModal').classList.remove('hidden');
+}
+
+function applyEnrichmentOverride(accountKey, jsonKey) {
+  if (jsonKey) {
+    enrichmentOverrides[accountKey] = jsonKey;
+  } else {
+    delete enrichmentOverrides[accountKey];
+  }
+  localStorage.setItem('stp_enrichment_overrides', JSON.stringify(enrichmentOverrides));
+  render(document.getElementById('search').value);
+  updateEnrichmentIndicator();
+  showEnrichMatchReport();
+}
+
+function updateEnrichmentIndicator() {
+  const existing = document.getElementById('enrichmentIndicator');
+  const toolbar = document.querySelector('.toolbar');
+  if (!toolbar) return;
+  if (Object.keys(enrichmentData).length > 0) {
+    const matchCount = accounts.filter(a => getEnrichment(a.name)).length;
+    const text = `Dept Data: ${matchCount} matched ✕`;
+    if (existing) {
+      existing.textContent = text;
+    } else {
+      const span = document.createElement('span');
+      span.id = 'enrichmentIndicator';
+      span.className = 'enrich-loaded-indicator';
+      span.title = 'Click to view match report';
+      span.textContent = text;
+      span.onclick = () => showEnrichMatchReport();
+      toolbar.appendChild(span);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
+function parseCurrency(str) {
+  return parseFloat((str || '').replace(/[^0-9.\-]/g, '')) || 0;
+}
+
+function fmtInput(n) {
+  return n ? '$' + n.toLocaleString('en-US') : '';
+}
+
+function onQuotaChange() {
+  quotaData.renewal = parseCurrency(document.getElementById('quotaRenewal').value);
+  quotaData.upsell = parseCurrency(document.getElementById('quotaUpsell').value);
+  quotaData.netNew = parseCurrency(document.getElementById('quotaNetNew').value);
+  saveQuotaData();
+  updateQuotaTotalDisplay();
+  updateQuotaRemaining();
+}
+
+function getAlloc(terrId) {
+  const a = quotaData.allocations[terrId] || {};
+  return {
+    proposed: a.proposed || 0,
+    renewal: a.renewal || 0,
+    upsell: a.upsell || 0,
+    netNew: a.netNew || 0
+  };
+}
+
+function onTerrQuotaChange(terrId, type) {
+  const input = document.getElementById(`qt-${terrId}-${type}`);
+  quotaData.allocations[terrId] = getAlloc(terrId);
+  quotaData.allocations[terrId][type] = parseCurrency(input.value);
+  saveQuotaData();
+  updateQuotaTotals();
+}
+
+// Returns { allocated, remaining, cls, label } for one territory's proposed quota.
+function terrQuotaStatus(terrId) {
+  const a = getAlloc(terrId);
+  const allocated = a.renewal + a.upsell + a.netNew;
+  const remaining = a.proposed - allocated;
+  let cls = '', label = '';
+  if (a.proposed > 0 || allocated > 0) {
+    if (Math.abs(remaining) < 0.01) {
+      cls = 'balanced'; label = 'Fully allocated';
+    } else if (remaining > 0) {
+      cls = 'under'; label = fmt(remaining) + ' left';
+    } else {
+      cls = 'over'; label = fmt(Math.abs(remaining)) + ' over';
+    }
+  }
+  return { proposed: a.proposed, allocated, remaining, cls, label };
+}
+
+function updateTerrQuotaCard(terrId) {
+  const st = terrQuotaStatus(terrId);
+  const totalEl = document.getElementById(`qt-${terrId}-total`);
+  if (totalEl) totalEl.textContent = fmt(st.allocated);
+  const remEl = document.getElementById(`qt-${terrId}-remaining`);
+  if (remEl) {
+    remEl.className = 'qt-remaining ' + st.cls;
+    remEl.innerHTML = st.cls
+      ? `<span>Remaining</span><span>${st.label}</span>`
+      : '';
+  }
+}
+
+function updateQuotaTotals() {
+  // Update per-territory totals in-place (no innerHTML rebuild)
+  territories
+    .filter(t => getTerrState(t.id) !== 'hidden')
+    .forEach(t => updateTerrQuotaCard(t.id));
+  updateQuotaRemaining();
+}
+
+function updateQuotaRemaining() {
+  const totalQuota = quotaData.renewal + quotaData.upsell + quotaData.netNew;
+  const sum = key => Object.values(quotaData.allocations).reduce((s, a) => s + (a[key] || 0), 0);
+  const allocRenewal = sum('renewal');
+  const allocUpsell = sum('upsell');
+  const allocNetNew = sum('netNew');
+  const totalProposed = sum('proposed');
+  const totalAlloc = allocRenewal + allocUpsell + allocNetNew;
+  const remaining = totalQuota - totalAlloc;
+
+  const remEl = document.getElementById('quotaRemaining');
+  if (totalQuota === 0 && totalProposed === 0) {
+    remEl.innerHTML = '';
+    remEl.className = '';
+    return;
+  }
+
+  let cls, label;
+  if (totalQuota === 0) {
+    cls = 'quota-remaining under';
+    label = `${fmt(totalProposed)} proposed across territories — set the plan quota above to track against it`;
+  } else if (Math.abs(remaining) < 0.01) {
+    cls = 'quota-remaining balanced';
+    label = 'Fully allocated';
+  } else if (remaining > 0) {
+    cls = 'quota-remaining under';
+    label = `${fmt(remaining)} unallocated — Renewal: ${fmt(quotaData.renewal - allocRenewal)}, Upsell: ${fmt(quotaData.upsell - allocUpsell)}, Net-New: ${fmt(quotaData.netNew - allocNetNew)}`;
+  } else {
+    cls = 'quota-remaining over';
+    label = `Over-allocated by ${fmt(Math.abs(remaining))}`;
+  }
+
+  // Roll-up of the per-territory proposed quotas vs. the plan quota
+  if (totalQuota > 0 && totalProposed > 0) {
+    const gap = totalProposed - totalQuota;
+    const gapNote = Math.abs(gap) < 0.01
+      ? 'matches plan quota'
+      : (gap > 0 ? `${fmt(gap)} above plan quota` : `${fmt(Math.abs(gap))} below plan quota`);
+    label += `<div style="margin-top:4px;font-size:0.72rem;opacity:.85">Proposed across territories: ${fmt(totalProposed)} — ${gapNote}</div>`;
+  }
+
+  remEl.className = cls;
+  remEl.innerHTML = label;
+}
+
+function updateQuotaTotalDisplay() {
+  const total = quotaData.renewal + quotaData.upsell + quotaData.netNew;
+  document.getElementById('quotaTotalDisplay').textContent = 'Total: ' + fmt(total);
+}
+
+function toggleQuotaPanel() {
+  const body = document.getElementById('quotaBody');
+  const btn = document.getElementById('quotaToggle');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    btn.textContent = 'Collapse';
+  } else {
+    body.classList.add('hidden');
+    btn.textContent = 'Expand';
+  }
+}
+
+function renderQuotaAllocation() {
+  const container = document.getElementById('quotaAllocation');
+  if (!container) return;
+
+  const visibleTerrs = territories.filter(t => getTerrState(t.id) !== 'hidden');
+
+  container.innerHTML = visibleTerrs.map(t => {
+    const alloc = getAlloc(t.id);
+    const st = terrQuotaStatus(t.id);
+    return `<div class="quota-terr-card">
+      <div class="qt-name">${esc(t.name)}</div>
+      <div class="qt-proposed">
+        <label>Proposed Quota</label>
+        <input type="text" id="qt-${t.id}-proposed" value="${fmtInput(alloc.proposed)}" placeholder="$0" oninput="onTerrQuotaChange('${t.id}','proposed')" />
+      </div>
+      <div class="qt-row">
+        <label>Renewal</label>
+        <input type="text" id="qt-${t.id}-renewal" value="${fmtInput(alloc.renewal)}" oninput="onTerrQuotaChange('${t.id}','renewal')" />
+      </div>
+      <div class="qt-row">
+        <label>Upsell</label>
+        <input type="text" id="qt-${t.id}-upsell" value="${fmtInput(alloc.upsell)}" oninput="onTerrQuotaChange('${t.id}','upsell')" />
+      </div>
+      <div class="qt-row">
+        <label>Net-New</label>
+        <input type="text" id="qt-${t.id}-netNew" value="${fmtInput(alloc.netNew)}" oninput="onTerrQuotaChange('${t.id}','netNew')" />
+      </div>
+      <div class="qt-total">
+        <span>Allocated</span>
+        <span id="qt-${t.id}-total">${fmt(st.allocated)}</span>
+      </div>
+      <div class="qt-remaining ${st.cls}" id="qt-${t.id}-remaining">${
+        st.cls ? `<span>Remaining</span><span>${st.label}</span>` : ''
+      }</div>
+    </div>`;
+  }).join('');
+
+  updateQuotaRemaining();
+}
+
+function initQuotaUI() {
+  loadQuotaData();
+  loadPipelineData();
+  document.getElementById('quotaRenewal').value = fmtInput(quotaData.renewal);
+  document.getElementById('quotaUpsell').value = fmtInput(quotaData.upsell);
+  document.getElementById('quotaNetNew').value = fmtInput(quotaData.netNew);
+  updateQuotaTotalDisplay();
+  renderQuotaAllocation();
+  updatePipelineIndicator();
+  updateEnrichmentIndicator();
+}
+
+// ── Update Check ────────────────────────────────────────────────────
+// The app is distributed as a standalone file, so it can't replace itself.
+// It checks a manifest in a public repo and offers the new file as a download.
+
+// Numeric semver-ish compare. Returns >0 if a is newer than b.
+function cmpVersion(a, b) {
+  const pa = String(a || '').split('.').map(n => parseInt(n, 10) || 0);
+  const pb = String(b || '').split('.').map(n => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] || 0) - (pb[i] || 0);
+    if (diff) return diff;
+  }
+  return 0;
+}
+
+let latestManifest = null;
+
+async function checkForUpdate({ force = false } = {}) {
+  const last = parseInt(localStorage.getItem('stp_update_last_check') || '0', 10);
+  if (!force && Date.now() - last < UPDATE_CHECK_INTERVAL_MS) return;
+
+  try {
+    // Cache-buster: raw.githubusercontent.com serves with max-age=300.
+    const resp = await fetch(`${UPDATE_MANIFEST_URL}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const manifest = await resp.json();
+    localStorage.setItem('stp_update_last_check', String(Date.now()));
+
+    if (cmpVersion(manifest.version, APP_VERSION) <= 0) {
+      if (force) alert(`You're up to date (v${APP_VERSION}).`);
+      return;
+    }
+    if (!force && manifest.version === localStorage.getItem('stp_update_dismissed_version')) return;
+
+    latestManifest = manifest;
+    showUpdateBanner(manifest);
+  } catch (e) {
+    // Offline is the normal case for this app — stay silent unless the user asked.
+    if (force) alert('Could not reach the update server. Check your connection and try again.');
+  }
+}
+
+function showUpdateBanner(manifest) {
+  const el = document.getElementById('updateBanner');
+  if (!el) return;
+  const notes = (manifest.notes || []).slice(0, 5);
+  el.innerHTML = `
+    <div class="ub-text">
+      <div class="ub-title">Version ${esc(manifest.version)} is available — you're on ${esc(APP_VERSION)}</div>
+      ${notes.length ? `<ul class="ub-notes">${notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+    </div>
+    <button id="ubDownload" onclick="downloadUpdate()">Download</button>
+    <button class="ub-secondary" onclick="exportAllData()" title="Save your plans before replacing the app file">Back Up First</button>
+    <button class="ub-secondary" onclick="dismissUpdate()">Dismiss</button>
+  `;
+  el.classList.remove('hidden');
+}
+
+function dismissUpdate() {
+  if (latestManifest) {
+    localStorage.setItem('stp_update_dismissed_version', latestManifest.version);
+  }
+  document.getElementById('updateBanner').classList.add('hidden');
+}
+
+async function downloadUpdate() {
+  if (!latestManifest) return;
+  const btn = document.getElementById('ubDownload');
+  const orig = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.textContent = 'Downloading…'; btn.disabled = true; }
+    const resp = await fetch(`${latestManifest.url}?t=${Date.now()}`, { cache: 'no-store' });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const html = await resp.text();
+    if (!/^\s*<!DOCTYPE html/i.test(html)) throw new Error('Unexpected file contents');
+
+    downloadBlob(new Blob([html], { type: 'text/html' }), 'index.html');
+    alert(
+      `Downloaded v${latestManifest.version} as index.html.\n\n` +
+      `Replace your current planner file with the downloaded one, then open it.\n\n` +
+      `Your saved plans normally carry over. If they don't appear, use ` +
+      `Actions → Restore Backup with a backup file.`
+    );
+  } catch (e) {
+    alert('Download failed: ' + e.message + '\n\nYou can download it manually from:\n' + latestManifest.url);
+  } finally {
+    if (btn) { btn.textContent = orig; btn.disabled = false; }
+  }
+}
+
+// ── Backup / Restore ────────────────────────────────────────────────
+// localStorage on file:// URLs is scoped differently across browsers, so
+// users need an explicit way to carry their data to a new copy of the app.
+
+const BACKUP_SCHEMA = 1;
+// Never included in a backup — it's a credential, and backups get shared around.
+const BACKUP_EXCLUDED_KEYS = ['stp_github_pat'];
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  // Revoking synchronously can abort the download in Firefox for larger blobs.
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function exportAllData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key.startsWith('stp_') || BACKUP_EXCLUDED_KEYS.includes(key)) continue;
+    data[key] = localStorage.getItem(key);
+  }
+  const payload = {
+    schema: BACKUP_SCHEMA,
+    appVersion: APP_VERSION,
+    exportedAt: new Date().toISOString(),
+    data
+  };
+  const stamp = new Date().toISOString().slice(0, 10);
+  downloadBlob(
+    new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }),
+    `territory-planner-backup-${stamp}.json`
+  );
+}
+
+function triggerRestoreBackup() {
+  document.getElementById('restoreBackupFileInput').click();
+}
+
+document.getElementById('restoreBackupFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const payload = JSON.parse(ev.target.result);
+      if (payload.schema !== BACKUP_SCHEMA || !payload.data || typeof payload.data !== 'object') {
+        throw new Error('Not a Territory Planner backup file.');
+      }
+      const keys = Object.keys(payload.data).filter(k => k.startsWith('stp_'));
+      if (!keys.length) throw new Error('Backup file contains no planner data.');
+
+      const when = (payload.exportedAt || '').slice(0, 10);
+      if (!confirm(
+        `Restore backup from ${when || 'unknown date'} (v${payload.appVersion || '?'})?\n\n` +
+        `This replaces all plans and settings currently in this browser.`
+      )) return;
+
+      keys.forEach(k => localStorage.setItem(k, payload.data[k]));
+      alert('Backup restored. Reloading…');
+      location.reload();
+    } catch (err) {
+      alert('Restore failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ── Board Rendering ─────────────────────────────────────────────────
+function render(filter = '') {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  const lowerFilter = filter.toLowerCase();
+
+  // Render hidden territories bar
+  const hiddenBar = document.getElementById('hiddenBar');
+  const hiddenTerrs = territories.filter(t => getTerrState(t.id) === 'hidden');
+  if (hiddenTerrs.length) {
+    hiddenBar.classList.remove('hidden');
+    hiddenBar.innerHTML = hiddenTerrs.map(t => {
+      const tcv25 = accounts.filter(a => a.territory === t.id).reduce((s, a) => s + a.tcv25, 0);
+      const count = accounts.filter(a => a.territory === t.id).length;
+      return `<span class="hidden-terr-chip" onclick="showTerritory('${t.id}')" title="Click to show">
+        ${esc(t.name)} (${count}) <span class="chip-ltv">${fmt(tcv25)}</span>
+      </span>`;
+    }).join('');
+  } else {
+    hiddenBar.classList.add('hidden');
+    hiddenBar.innerHTML = '';
+  }
+
+  territories.forEach(t => {
+    const state = getTerrState(t.id);
+    if (state === 'hidden') return;
+
+    const isMin = state === 'minimized';
+    const col = document.createElement('div');
+    col.className = 'territory' + (isMin ? ' minimized' : '');
+    col.style.setProperty('--accent', t.accent);
+    col.dataset.territory = t.id;
+
+    const terrAccounts = accounts.filter(a => a.territory === t.id);
+    const total23 = terrAccounts.reduce((s, a) => s + a.tcv23, 0);
+    const total24 = terrAccounts.reduce((s, a) => s + a.tcv24, 0);
+    const total25 = terrAccounts.reduce((s, a) => s + a.tcv25, 0);
+
+    const hasEnrichment = Object.keys(enrichmentData).length > 0;
+    const totalDeptSpend = hasEnrichment
+      ? terrAccounts.reduce((s, a) => { const ed = getEnrichment(a.name); return s + (ed && ed.spend != null ? ed.spend : 0); }, 0)
+      : 0;
+
+    const hasPipeline = Object.keys(pipelineData).length > 0;
+    const totalFY26Book   = hasPipeline ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy26Bookings !== null ? pd.fy26Bookings : 0); }, 0) : 0;
+    const totalFY26Funnel = hasPipeline ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy26Funnel !== null ? pd.fy26Funnel : 0); }, 0) : 0;
+    const totalFY27Funnel = hasPipeline ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy27Funnel !== null ? pd.fy27Funnel : 0); }, 0) : 0;
+    const totalFY26Proj   = totalFY26Book + totalFY26Funnel;
+
+    const flagCounts = {
+      soc:      terrAccounts.filter(a => a.flags && a.flags.soc).length,
+      retainer: terrAccounts.filter(a => a.flags && a.flags.retainer).length,
+      specProj: terrAccounts.filter(a => a.flags && a.flags.specProj).length,
+    };
+    const anyFlags = flagCounts.soc > 0 || flagCounts.retainer > 0 || flagCounts.specProj > 0;
+
+    const minIcon = isMin ? ICON_EXPAND : ICON_COLLAPSE;
+    const minTitle = isMin ? 'Expand' : 'Minimize';
+
+    const isEmpty = terrAccounts.length === 0;
+
+    col.innerHTML = `
+      <div class="territory-header">
+        <span class="terr-controls" style="background:${t.accent}33">
+          <span class="terr-drag-handle" title="Drag to reorder">&#9776;</span>
+          <button onclick="toggleMinimize('${t.id}')" title="${minTitle}">${minIcon}</button>
+          <button class="hide-btn" onclick="hideTerritory('${t.id}')" title="Hide">${ICON_HIDE}</button>
+          <button class="delete-btn" onclick="deleteTerritory('${t.id}')" title="${isEmpty ? 'Delete territory' : 'Move all accounts out to delete'}" ${isEmpty ? '' : 'disabled'}>${ICON_TRASH}</button>
+          <span class="color-picker-wrap">
+            <button class="color-pick-btn" onclick="toggleColorPicker(event,'${t.id}')" title="Change color">
+              <span class="color-dot" style="background:${t.accent}"></span>
+            </button>
+            <div class="color-picker-dropdown" id="cpd-${t.id}">
+              ${ACCENT_COLORS.map(c => `<span class="color-swatch${c===t.accent?' active':''}" style="background:${c}" onclick="changeTerrColor('${t.id}','${c}')"></span>`).join('')}
+            </div>
+          </span>
+        </span>
+        <h2>
+          <span class="terr-name" onclick="renameTerritory('${t.id}')" title="Click to rename">${esc(t.name)}</span>
+          <span class="count">${terrAccounts.length} accounts</span>
+        </h2>
+        <div class="territory-stats">
+          <div class="ts-row"><span>FY23 TCV</span><span class="tcv">${fmt(total23)}</span></div>
+          <div class="ts-row"><span>FY24 TCV</span><span class="tcv">${fmt(total24)}</span></div>
+          <div class="ts-row"><span>FY25 TCV</span><span class="tcv tcv-primary">${fmt(total25)}</span></div>
+          ${hasEnrichment ? `<div class="ts-row ts-divider"></div>
+          <div class="ts-row"><span>12-mo Dept Spend</span><span class="tcv">${fmt(totalDeptSpend)}</span></div>` : ''}
+          ${hasPipeline ? `<div class="ts-row ts-divider"></div>
+          <div class="ts-row"><span>FY26 Bookings</span><span class="tcv">${fmt(totalFY26Book)}</span></div>
+          <div class="ts-row"><span>FY26 Funnel</span><span class="tcv">${fmt(totalFY26Funnel)}</span></div>
+          <div class="ts-row"><span>FY26 Projected</span><span class="tcv tcv-primary">${fmt(totalFY26Proj)}</span></div>
+          <div class="ts-row"><span>FY27 Funnel</span><span class="tcv tcv-primary">${fmt(totalFY27Funnel)}</span></div>` : ''}
+          ${anyFlags ? `<div class="ts-divider"></div>
+          <div class="ts-flag-row">
+            ${flagCounts.soc > 0      ? `<span class="ts-flag-chip flag-soc">SOC: ${flagCounts.soc}</span>` : ''}
+            ${flagCounts.retainer > 0 ? `<span class="ts-flag-chip flag-retainer">Retainer: ${flagCounts.retainer}</span>` : ''}
+            ${flagCounts.specProj > 0 ? `<span class="ts-flag-chip flag-specproj">Spec_Proj: ${flagCounts.specProj}</span>` : ''}
+          </div>` : ''}
+        </div>
+      </div>
+      <div class="territory-body" data-territory="${t.id}"></div>
+    `;
+
+    // Territory drag-to-reorder (initiated from handle)
+    const handle = col.querySelector('.terr-drag-handle');
+    handle.addEventListener('mousedown', () => { col.draggable = true; });
+    col.addEventListener('dragstart', e => {
+      if (!col.draggable) { e.preventDefault(); return; }
+      // Only allow territory drag if initiated from handle
+      draggedTerrId = t.id;
+      draggedId = null;
+      col.classList.add('terr-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', 'territory');
+    });
+    col.addEventListener('dragend', () => {
+      col.draggable = false;
+      col.classList.remove('terr-dragging');
+      draggedTerrId = null;
+      document.querySelectorAll('.territory').forEach(el => {
+        el.classList.remove('terr-drag-over-left', 'terr-drag-over-right', 'drag-over');
+      });
+    });
+
+    // Territory drop target (for reordering)
+    col.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (draggedTerrId && draggedTerrId !== t.id) {
+        e.dataTransfer.dropEffect = 'move';
+        const rect = col.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        col.classList.remove('terr-drag-over-left', 'terr-drag-over-right');
+        if (e.clientX < midX) {
+          col.classList.add('terr-drag-over-left');
+        } else {
+          col.classList.add('terr-drag-over-right');
+        }
+      }
+    });
+
+    col.addEventListener('dragleave', e => {
+      if (!col.contains(e.relatedTarget)) {
+        col.classList.remove('terr-drag-over-left', 'terr-drag-over-right', 'drag-over');
+      }
+    });
+
+    const body = col.querySelector('.territory-body');
+
+    terrAccounts.forEach(a => {
+      const show = !lowerFilter || a.name.toLowerCase().includes(lowerFilter);
+
+      const card = document.createElement('div');
+      card.className = 'account-card' + (show ? '' : ' hidden');
+      card.draggable = true;
+      card.dataset.id = a.id;
+      const pd = pipelineData[normalizeName(a.name)];
+      const fy26Proj = pd ? ((pd.fy26Funnel || 0) + (pd.fy26Bookings || 0)) : 0;
+      const ed = getEnrichment(a.name);
+      const enrichHtml = ed ? (() => {
+        const spendFmt = ed.spend != null ? fmt(ed.spend) : '—';
+        const contracts = ed.contractCount != null ? `${ed.contractCount} contract${ed.contractCount === 1 ? '' : 's'}` : '';
+        const vendors = ed.techVendors || [];
+        const topVendors = vendors.slice(0, 3);
+        const extraVendors = vendors.slice(3);
+        const vendorId = `vendors-${a.id}`;
+        const makeChip = v => {
+          const isPanw = v.toLowerCase().includes('palo alto');
+          return `<span class="enrich-vendor-chip${isPanw ? ' panw' : ''}">${esc(v)}</span>`;
+        };
+        const topChips = topVendors.map(makeChip).join('');
+        const extraChips = extraVendors.length > 0
+          ? `<button class="enrich-expand-btn" id="${vendorId}-btn"
+               onclick="event.stopPropagation();toggleEnrichVendors('${vendorId}')">+${extraVendors.length}</button>
+             <span id="${vendorId}-extra" class="hidden">${extraVendors.map(makeChip).join('')}</span>`
+          : '';
+        const suppliers = (ed.topSuppliers || []).join(' · ');
+        return `
+          <div class="card-section-title">12-Mo Spend</div>
+          <div class="enrich-row" style="font-size:0.68rem;color:#374151;margin-bottom:4px">
+            <span style="font-weight:600">${spendFmt}</span>${contracts ? ` <span style="color:#9ca3af">· ${contracts}</span>` : ''}
+          </div>
+          ${topChips || extraChips ? `
+          <div class="card-section-title">Tech Vendors</div>
+          <div style="margin-bottom:4px">${topChips}${extraChips}</div>` : ''}
+          ${suppliers ? `
+          <div class="card-section-title">Suppliers</div>
+          <div class="enrich-suppliers">${esc(suppliers)}</div>` : ''}`;
+      })() : '';
+
+      const pipelineHtml = pd ? `
+        <div class="card-section-title">Bookings &amp; Funnel</div>
+        <div class="pipeline-row">
+          ${pd.fy26Bookings !== null ? `<div class="pipe-col"><span class="pipe-yr">FY26 Book</span><span class="pipe-val">${fmt(pd.fy26Bookings)}</span></div>` : ''}
+          ${pd.fy26Funnel !== null ? `<div class="pipe-col"><span class="pipe-yr">FY26 Funnel</span><span class="pipe-val">${fmt(pd.fy26Funnel)}</span></div>` : ''}
+          <div class="pipe-col"><span class="pipe-yr">FY26 Projected</span><span class="pipe-val" style="font-weight:700">${fmt(fy26Proj)}</span></div>
+          ${pd.fy27Funnel !== null ? `<div class="pipe-col"><span class="pipe-yr">FY27 Funnel</span><span class="pipe-val">${fmt(pd.fy27Funnel)}</span></div>` : ''}
+        </div>` : '';
+
+      const flags = a.flags || {};
+      card.innerHTML = `
+        <div class="name">${esc(a.name)}</div>
+        <div class="card-section-title">Total Contract Value</div>
+        <div class="tcv-grid">
+          <div class="tcv-col"><span class="tcv-yr">FY23</span><span class="tcv-val">${fmt(a.tcv23)}</span></div>
+          <div class="tcv-col"><span class="tcv-yr">FY24</span><span class="tcv-val">${fmt(a.tcv24)}</span></div>
+          <div class="tcv-col"><span class="tcv-yr">FY25</span><span class="tcv-val tcv-primary">${fmt(a.tcv25)}</span></div>
+        </div>
+        ${pipelineHtml}
+        ${enrichHtml}
+        <div class="card-section-title">Account Flags</div>
+        <div class="flag-row">
+          <button class="flag-btn flag-soc${flags.soc ? ' active' : ''}" onclick="event.stopPropagation();toggleFlag('${a.id}','soc')">SOC</button>
+          <button class="flag-btn flag-retainer${flags.retainer ? ' active' : ''}" onclick="event.stopPropagation();toggleFlag('${a.id}','retainer')">Retainer</button>
+          <button class="flag-btn flag-specproj${flags.specProj ? ' active' : ''}" onclick="event.stopPropagation();toggleFlag('${a.id}','specProj')">Spec_Proj</button>
+        </div>
+      `;
+
+      card.addEventListener('dragstart', e => {
+        e.stopPropagation();
+        draggedId = a.id;
+        draggedTerrId = null;
+        card.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'account');
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+        draggedId = null;
+        document.querySelectorAll('.territory').forEach(el => el.classList.remove('drag-over'));
+      });
+
+      body.appendChild(card);
+    });
+
+    body.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (draggedId) {
+        e.dataTransfer.dropEffect = 'move';
+        col.classList.add('drag-over');
+      }
+    });
+
+    body.addEventListener('dragleave', e => {
+      if (!body.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    });
+
+    col.addEventListener('drop', e => {
+      e.preventDefault();
+      col.classList.remove('drag-over', 'terr-drag-over-left', 'terr-drag-over-right');
+
+      // Handle territory reorder
+      if (draggedTerrId && draggedTerrId !== t.id) {
+        const fromIdx = territories.findIndex(x => x.id === draggedTerrId);
+        const toIdx = territories.findIndex(x => x.id === t.id);
+        if (fromIdx === -1 || toIdx === -1) return;
+
+        const rect = col.getBoundingClientRect();
+        const midX = rect.left + rect.width / 2;
+        const insertBefore = e.clientX < midX;
+
+        const [moved] = territories.splice(fromIdx, 1);
+        let newIdx = territories.findIndex(x => x.id === t.id);
+        if (!insertBefore) newIdx++;
+        territories.splice(newIdx, 0, moved);
+
+        draggedTerrId = null;
+        saveState();
+        render(document.getElementById('search').value);
+        return;
+      }
+
+      // Handle account drop
+      if (draggedId) {
+        const acc = accounts.find(a => a.id === draggedId);
+        if (acc && acc.territory !== t.id) {
+          acc.territory = t.id;
+          saveState();
+          render(document.getElementById('search').value);
+        }
+      }
+    });
+
+    board.appendChild(col);
+  });
+
+  renderSummary();
+  renderQuotaAllocation();
+}
+
+function renderSummary() {
+  const summary = document.getElementById('summary');
+  let html = '';
+
+  const growthFmt = (curr, prev) => {
+    if (!prev) return '&mdash;';
+    const pct = ((curr - prev) / Math.abs(prev) * 100).toFixed(1);
+    const sign = pct >= 0 ? '+' : '';
+    const color = pct >= 0 ? '#00CC66' : '#C84624';
+    return `<span style="color:${color};font-weight:600">${sign}${pct}%</span>`;
+  };
+
+  territories.filter(t => getTerrState(t.id) !== 'hidden').forEach(t => {
+    const terrAccounts = accounts.filter(a => a.territory === t.id);
+    const tcv23 = terrAccounts.reduce((s, a) => s + a.tcv23, 0);
+    const tcv24 = terrAccounts.reduce((s, a) => s + a.tcv24, 0);
+    const tcv25 = terrAccounts.reduce((s, a) => s + a.tcv25, 0);
+    const hasPipe = Object.keys(pipelineData).length > 0;
+    const terrFY26Proj = hasPipe ? terrAccounts.reduce((s, a) => {
+      const pd = pipelineData[normalizeName(a.name)];
+      return s + (pd ? (pd.fy26Bookings || 0) + (pd.fy26Funnel || 0) : 0);
+    }, 0) : 0;
+    html += `<div class="chip" style="border-top-color:${t.accent}">
+      <div class="chip-name" style="color:${t.accent}">${esc(t.name)}</div>
+      <div class="chip-section-label">Territory Growth</div>
+      <div class="chip-growth">FY24: ${growthFmt(tcv24, tcv23)} &middot; FY25: ${growthFmt(tcv25, tcv24)}</div>
+      ${hasPipe ? `<div class="chip-growth">FY26 Projected: ${growthFmt(terrFY26Proj, tcv25)}</div>` : ''}
+    </div>`;
+  });
+
+  const total23 = accounts.reduce((s, a) => s + a.tcv23, 0);
+  const total24 = accounts.reduce((s, a) => s + a.tcv24, 0);
+  const total25 = accounts.reduce((s, a) => s + a.tcv25, 0);
+  const hasPipelineSummary = Object.keys(pipelineData).length > 0;
+  const totalFY26Proj = hasPipelineSummary ? accounts.reduce((s, a) => {
+    const pd = pipelineData[normalizeName(a.name)];
+    return s + (pd ? (pd.fy26Bookings || 0) + (pd.fy26Funnel || 0) : 0);
+  }, 0) : 0;
+  html += `<div class="total-ltv">
+    <span class="total-title">District Total</span>
+    <div class="total-tcvs">
+      <div class="tcv-item"><span class="tcv-yr">FY23</span><span class="tcv-amt">${fmt(total23)}</span></div>
+      <div class="tcv-item"><span class="tcv-yr">FY24</span><span class="tcv-amt">${fmt(total24)}</span></div>
+      <div class="tcv-item"><span class="tcv-yr">FY25</span><span class="tcv-amt tcv-primary">${fmt(total25)}</span></div>
+      ${hasPipelineSummary ? `<div class="tcv-item"><span class="tcv-yr">FY26 Projected</span><span class="tcv-amt tcv-primary">${fmt(totalFY26Proj)}</span></div>` : ''}
+    </div>
+    <div class="total-growth">FY24 Growth: ${growthFmt(total24, total23)} &middot; FY25 Growth: ${growthFmt(total25, total24)}</div>
+    ${hasPipelineSummary ? `<div class="total-growth">FY26 Projected Growth: ${growthFmt(totalFY26Proj, total25)}</div>` : ''}
+  </div>`;
+  summary.innerHTML = html;
+}
+
+function toggleFlag(accountId, flag) {
+  const a = accounts.find(x => x.id === accountId);
+  if (!a) return;
+  if (!a.flags) a.flags = {};
+  a.flags[flag] = !a.flags[flag];
+  saveState();
+  render(document.getElementById('search').value);
+}
+
+function resetBoard() {
+  accounts = JSON.parse(JSON.stringify(initialAccounts));
+  document.getElementById('search').value = '';
+  saveState();
+  render();
+}
+
+function generatePDFReport() {
+  const visibleTerrs = territories.filter(t => getTerrState(t.id) !== 'hidden');
+  if (!visibleTerrs.length) { alert('No territories to report on.'); return; }
+
+  const hasPipe = Object.keys(pipelineData).length > 0;
+
+  const fmtN = n => n == null ? '—' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const yesNo = v => v ? '<span class="flag-yes">Yes</span>' : '<span class="flag-no">No</span>';
+
+  const terrPages = visibleTerrs.map(t => {
+    const terrAccounts = accounts.filter(a => a.territory === t.id);
+    const total23 = terrAccounts.reduce((s, a) => s + a.tcv23, 0);
+    const total24 = terrAccounts.reduce((s, a) => s + a.tcv24, 0);
+    const total25 = terrAccounts.reduce((s, a) => s + a.tcv25, 0);
+
+    const fy26Book   = hasPipe ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy26Bookings !== null ? pd.fy26Bookings : 0); }, 0) : 0;
+    const fy26Funnel = hasPipe ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy26Funnel   !== null ? pd.fy26Funnel   : 0); }, 0) : 0;
+    const fy27Funnel = hasPipe ? terrAccounts.reduce((s, a) => { const pd = pipelineData[normalizeName(a.name)]; return s + (pd && pd.fy27Funnel   !== null ? pd.fy27Funnel   : 0); }, 0) : 0;
+    const fy26Proj   = fy26Book + fy26Funnel;
+
+    const flagCounts = {
+      soc:      terrAccounts.filter(a => a.flags && a.flags.soc).length,
+      retainer: terrAccounts.filter(a => a.flags && a.flags.retainer).length,
+      specProj: terrAccounts.filter(a => a.flags && a.flags.specProj).length,
+    };
+    const anyFlags = flagCounts.soc > 0 || flagCounts.retainer > 0 || flagCounts.specProj > 0;
+
+    const pipeHeaderCols = hasPipe ? '<th>FY26 Book</th><th>FY26 Funnel</th><th>FY26 Projected</th><th>FY27 Funnel</th>' : '';
+    const flagHeaderCols = '<th>SOC</th><th>Retainer</th><th>Spec_Proj</th>';
+
+    const accountRows = terrAccounts.map(a => {
+      const pd = hasPipe ? pipelineData[normalizeName(a.name)] : null;
+      const pipeCols = hasPipe ? `
+        <td>${pd && pd.fy26Bookings !== null ? fmtN(pd.fy26Bookings) : '—'}</td>
+        <td>${pd && pd.fy26Funnel   !== null ? fmtN(pd.fy26Funnel)   : '—'}</td>
+        <td class="bold">${pd ? fmtN((pd.fy26Funnel || 0) + (pd.fy26Bookings || 0)) : '—'}</td>
+        <td>${pd && pd.fy27Funnel   !== null ? fmtN(pd.fy27Funnel)   : '—'}</td>` : '';
+      const f = a.flags || {};
+      return `<tr>
+        <td class="acct-name">${a.name}</td>
+        <td>${fmtN(a.tcv23)}</td>
+        <td>${fmtN(a.tcv24)}</td>
+        <td class="bold">${fmtN(a.tcv25)}</td>
+        ${pipeCols}
+        <td class="center">${f.soc      ? '<span class="flag-soc-lbl">SOC</span>'      : ''}</td>
+        <td class="center">${f.retainer ? '<span class="flag-ret-lbl">Retainer</span>' : ''}</td>
+        <td class="center">${f.specProj ? '<span class="flag-sp-lbl">Spec_Proj</span>' : ''}</td>
+      </tr>`;
+    }).join('');
+
+    return `
+    <div class="page">
+      <div class="page-header" style="border-left: 5px solid ${t.accent}">
+        <div class="terr-title" style="color:${t.accent}">${t.name}</div>
+        <div class="terr-meta">${terrAccounts.length} accounts</div>
+      </div>
+      <div class="summary-grid">
+        <div class="sum-block">
+          <div class="sum-label">FY23 TCV</div><div class="sum-val">${fmtN(total23)}</div>
+        </div>
+        <div class="sum-block">
+          <div class="sum-label">FY24 TCV</div><div class="sum-val">${fmtN(total24)}</div>
+        </div>
+        <div class="sum-block highlight">
+          <div class="sum-label">FY25 TCV</div><div class="sum-val">${fmtN(total25)}</div>
+        </div>
+        ${hasPipe ? `
+        <div class="sum-block pipe">
+          <div class="sum-label">FY26 Bookings</div><div class="sum-val">${fmtN(fy26Book)}</div>
+        </div>
+        <div class="sum-block pipe">
+          <div class="sum-label">FY26 Funnel</div><div class="sum-val">${fmtN(fy26Funnel)}</div>
+        </div>
+        <div class="sum-block pipe bold-block">
+          <div class="sum-label">FY26 Projected</div><div class="sum-val">${fmtN(fy26Proj)}</div>
+        </div>
+        <div class="sum-block pipe">
+          <div class="sum-label">FY27 Funnel</div><div class="sum-val">${fmtN(fy27Funnel)}</div>
+        </div>` : ''}
+        ${anyFlags ? `
+        <div class="sum-block flags-block">
+          <div class="sum-label">Flags</div>
+          <div class="flag-chips">
+            ${flagCounts.soc      > 0 ? `<span class="fc-soc">SOC: ${flagCounts.soc}</span>`           : ''}
+            ${flagCounts.retainer > 0 ? `<span class="fc-ret">Retainer: ${flagCounts.retainer}</span>` : ''}
+            ${flagCounts.specProj > 0 ? `<span class="fc-sp">Spec_Proj: ${flagCounts.specProj}</span>` : ''}
+          </div>
+        </div>` : ''}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="acct-name-h">Account</th>
+            <th>FY23 TCV</th><th>FY24 TCV</th><th>FY25 TCV</th>
+            ${pipeHeaderCols}
+            ${flagHeaderCols}
+          </tr>
+        </thead>
+        <tbody>${accountRows}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Territory Plan Report</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 9pt; color: #111; }
+
+  .page { padding: 28px 32px; page-break-after: always; }
+  .page:last-child { page-break-after: avoid; }
+
+  .page-header { padding: 10px 14px; background: #f5f5f5; border-radius: 6px; margin-bottom: 14px; display: flex; align-items: baseline; gap: 12px; }
+  .terr-title { font-size: 18pt; font-weight: 700; }
+  .terr-meta { font-size: 9pt; color: #6b7280; }
+
+  .summary-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .sum-block { background: #f3f4f6; border-radius: 5px; padding: 6px 12px; min-width: 90px; }
+  .sum-block.highlight { background: #FECDC0; }
+  .sum-block.pipe { background: #DAF0F6; }
+  .sum-block.bold-block .sum-val { font-weight: 700; }
+  .sum-block.flags-block { background: #f9fafb; border: 1px solid #e5e7eb; }
+  .sum-label { font-size: 7pt; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .sum-val { font-size: 11pt; font-weight: 600; }
+  .sum-block.highlight .sum-val { color: #C94727; }
+  .sum-block.pipe .sum-val { color: #00C0E8; }
+
+  .flag-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+  .fc-soc { background: #FBE1A2; color: #7A5700; border-radius: 3px; padding: 1px 5px; font-size: 7.5pt; font-weight: 700; }
+  .fc-ret { background: #ADD8B1; color: #155226; border-radius: 3px; padding: 1px 5px; font-size: 7.5pt; font-weight: 700; }
+  .fc-sp  { background: #DAF0F6; color: #006B8A; border-radius: 3px; padding: 1px 5px; font-size: 7.5pt; font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+  thead tr { background: #000000; color: #fff; }
+  thead th { padding: 6px 8px; text-align: right; font-weight: 600; white-space: nowrap; }
+  thead th.acct-name-h { text-align: left; }
+  tbody tr { border-bottom: 1px solid #e5e7eb; }
+  tbody tr:nth-child(even) { background: #f9fafb; }
+  tbody td { padding: 5px 8px; text-align: right; vertical-align: middle; }
+  td.acct-name { text-align: left; font-weight: 500; }
+  td.bold { font-weight: 700; }
+  td.center { text-align: center; }
+
+  .flag-soc-lbl { background: #FBE1A2; color: #7A5700; border-radius: 3px; padding: 1px 5px; font-size: 7pt; font-weight: 700; }
+  .flag-ret-lbl { background: #ADD8B1; color: #155226; border-radius: 3px; padding: 1px 5px; font-size: 7pt; font-weight: 700; }
+  .flag-sp-lbl  { background: #DAF0F6; color: #006B8A; border-radius: 3px; padding: 1px 5px; font-size: 7pt; font-weight: 700; }
+
+  @media print {
+    @page { margin: 0.5in; size: landscape; }
+    .page { padding: 0; }
+  }
+</style>
+</head>
+<body>
+${terrPages}
+<script>window.onload = () => window.print();<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function exportCSV() {
+  const terrMap = Object.fromEntries(territories.map(t => [t.id, t.name]));
+  const hasPipe = Object.keys(pipelineData).length > 0;
+  const pipeHeaders = hasPipe ? ',FY26 Bookings,FY26 Funnel,FY26 Projected,FY27 Funnel' : '';
+  const header = `Account Name,Territory,FY23 TCV,FY24 TCV,FY25 TCV${pipeHeaders},SOC,Retainer,Spec_Proj\n`;
+  let csv = header;
+  const sorted = [...accounts].sort((a, b) => {
+    const ti = territories.findIndex(t => t.id === a.territory);
+    const tj = territories.findIndex(t => t.id === b.territory);
+    return ti - tj;
+  });
+  sorted.forEach(a => {
+    const base = `"${a.name}","${terrMap[a.territory]}",${a.tcv23},${a.tcv24},${a.tcv25}`;
+    let pipeCols = '';
+    if (hasPipe) {
+      const pd = pipelineData[normalizeName(a.name)];
+      const fy26Book   = pd && pd.fy26Bookings !== null ? pd.fy26Bookings : '';
+      const fy26Funnel = pd && pd.fy26Funnel   !== null ? pd.fy26Funnel   : '';
+      const fy26Proj   = (pd && pd.fy26Bookings !== null && pd.fy26Funnel !== null)
+        ? pd.fy26Bookings + pd.fy26Funnel : '';
+      const fy27Funnel = pd && pd.fy27Funnel   !== null ? pd.fy27Funnel   : '';
+      pipeCols = `,${fy26Book},${fy26Funnel},${fy26Proj},${fy27Funnel}`;
+    }
+    const f = a.flags || {};
+    const flagCols = `,${f.soc ? 'Yes' : 'No'},${f.retainer ? 'Yes' : 'No'},${f.specProj ? 'Yes' : 'No'}`;
+    csv += `${base}${pipeCols}${flagCols}\n`;
+  });
+  downloadBlob(new Blob([csv], { type: 'text/csv' }), 'territory_plan.csv');
+}
+
+function triggerImportTerritoryCSV() {
+  document.getElementById('importTerritoryFileInput').click();
+}
+
+document.getElementById('importTerritoryFileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  this.value = '';
+  const reader = new FileReader();
+  reader.onload = ev => processImportTerritoryCSV(ev.target.result);
+  reader.readAsText(file);
+});
+
+function processImportTerritoryCSV(text) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) { alert('CSV appears to be empty.'); return; }
+
+  // Skip title row if present (first cell doesn't look like a header)
+  let headerRow = 0;
+  if (!rows[0][0].toLowerCase().includes('account')) headerRow = 1;
+  if (rows.length <= headerRow + 1) { alert('No data rows found.'); return; }
+
+  const headers  = rows[headerRow].map(h => h.trim());
+  const dataRows = rows.slice(headerRow + 1).filter(r => r.some(c => c.trim() !== ''));
+
+  const nameIdx   = findPipelineCol(headers, ['account name', 'accountname', 'account']);
+  const terrIdx   = findPipelineCol(headers, ['territory']);
+  const tcv23Idx  = findPipelineCol(headers, ['fy23 tcv', 'fy23tcv', 'fy23']);
+  const tcv24Idx  = findPipelineCol(headers, ['fy24 tcv', 'fy24tcv', 'fy24']);
+  const tcv25Idx  = findPipelineCol(headers, ['fy25 tcv', 'fy25tcv', 'fy25']);
+  const fy26BkIdx = findPipelineCol(headers, ['fy26 bookings', 'fy26bookings']);
+  const fy26FuIdx = findPipelineCol(headers, ['fy26 funnel', 'fy26funnel']);
+  const fy27FuIdx = findPipelineCol(headers, ['fy27 funnel', 'fy27funnel']);
+  const socIdx    = findPipelineCol(headers, ['soc']);
+  const retIdx    = findPipelineCol(headers, ['retainer']);
+  const spIdx     = findPipelineCol(headers, ['spec_proj', 'specproj', 'spec proj']);
+
+  if (nameIdx === -1 || terrIdx === -1) {
+    alert('Could not find Account Name or Territory columns.'); return;
+  }
+
+  if (!confirm(`Add ${dataRows.length} accounts from this CSV to the current plan?`)) return;
+
+  // Merge territories — add any names not already present
+  const existingTerrNames = new Set(territories.map(t => t.name));
+  const existingAccountNames = new Set(accounts.map(a => normalizeName(a.name)));
+  let nextTerrIdx = territories.length;
+  let nextAcctIdx = accounts.length;
+
+  const terrIdByName = Object.fromEntries(territories.map(t => [t.name, t.id]));
+  dataRows.forEach(r => {
+    const t = (r[terrIdx] || '').trim();
+    if (t && !existingTerrNames.has(t)) {
+      const newTerr = {
+        id: `t${nextTerrIdx}`,
+        name: t,
+        accent: ACCENT_COLORS[nextTerrIdx % ACCENT_COLORS.length],
+      };
+      territories.push(newTerr);
+      terrIdByName[t] = newTerr.id;
+      existingTerrNames.add(t);
+      nextTerrIdx++;
+    }
+  });
+
+  const hasPipe = fy26BkIdx !== -1 || fy26FuIdx !== -1 || fy27FuIdx !== -1;
+  let added = 0;
+
+  dataRows.forEach(r => {
+    const name     = (r[nameIdx] || '').trim();
+    const terrName = (r[terrIdx] || '').trim();
+    if (!name || existingAccountNames.has(normalizeName(name))) return; // skip duplicates
+
+    const parse = idx => idx >= 0 ? parsePipelineCurrency(r[idx]) : 0;
+    const flag  = idx => idx >= 0 && (r[idx] || '').trim().toLowerCase() === 'yes';
+
+    if (hasPipe) {
+      pipelineData[normalizeName(name)] = {
+        fy26Bookings: fy26BkIdx >= 0 ? parse(fy26BkIdx) : null,
+        fy26Funnel:   fy26FuIdx >= 0 ? parse(fy26FuIdx) : null,
+        fy27Funnel:   fy27FuIdx >= 0 ? parse(fy27FuIdx) : null,
+      };
+    }
+
+    accounts.push({
+      id: `a${nextAcctIdx++}`,
+      name,
+      territory: terrIdByName[terrName] || territories[0]?.id || 't0',
+      tcv23: parse(tcv23Idx),
+      tcv24: parse(tcv24Idx),
+      tcv25: parse(tcv25Idx),
+      flags: { soc: flag(socIdx), retainer: flag(retIdx), specProj: flag(spIdx) },
+    });
+    existingAccountNames.add(normalizeName(name));
+    added++;
+  });
+
+  initialAccounts = JSON.parse(JSON.stringify(accounts));
+
+  saveState();
+  if (hasPipe) {
+    pipelineSource = 'csv';
+    savePipelineData();
+  }
+
+  document.getElementById('uploadPanel').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  render();
+  updatePipelineIndicator();
+  alert(`Added ${added} new accounts across ${territories.length} total territories. (${dataRows.length - added} skipped as duplicates)`);
+}
+
+// ── Event Wiring ────────────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+fileInput.addEventListener('change', e => {
+  handleFile(e.target.files[0]);
+});
+
+document.getElementById('search').addEventListener('input', e => render(e.target.value));
+
+// Update preview when column selects change
+['colName', 'colTerritory', 'colTCV23', 'colTCV24', 'colTCV25'].forEach(id => {
+  document.getElementById(id).addEventListener('change', showPreview);
+});
+
+initApp();
+</script>
+</body>
+</html>
